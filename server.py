@@ -38,8 +38,16 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route('/upload', methods=['GET', 'POST']) # when i delete GET method and the if statment, I get message "Method not allowed."
+@app.route('/upload', methods=['GET']) # when i delete GET method and the if statment, I get message "Method not allowed."
 def upload_file():
+     # find out who my user is e query user and audio.
+
+
+ return render_template('upload_mp3.html')
+
+
+@app.route('/process_upload', methods=['POST'])
+def process_upload():
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -52,15 +60,28 @@ def upload_file():
             flash('No selected file')
             return redirect(request.url)
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
+            filename = secure_filename(file.filename) #create audio object add and commit on my table
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-            # my_podcast = f'/static/uploaded_mp3/{filename}'
-            return render_template('my_podcasts.html', filename=filename)
-            
-            # return redirect(f'/static/uploaded_mp3/{filename}')
+            return render_template('my_podcasts.html',  filename=filename)
+    
+            # I NEED TO REDIRECT /PROCESS-UPLOAD TO /MY-PODCASTS ROUTE, BUT IDK WHAT 
+            #TO DO TO PASS 'FILENAME', SINCE REDIREC DOESN'T ALLOW MORE THAN 1 ARGUMENT.
 
-    return render_template('upload_mp3.html')
+@app.route('/my-podcasts')
+def my_podcasts():
+
+    
+    return render_template('my_podcasts.html')
+
+            # I need to have an user object # i can live an empty string for my S3 path on the tables.
+
+            
+           #add relatioships 
+
+
+
+   
 
 # @app.route('/raw-podcast')
     

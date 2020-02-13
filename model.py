@@ -56,6 +56,7 @@ class Audio(db.Model):
                          nullable=False,
                          )
 
+    user = db.relationship('User', backref='audios')
 
     def __repr__(self):
         """Return a human-readable representation of an Audio."""

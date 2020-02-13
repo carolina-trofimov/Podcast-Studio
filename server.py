@@ -22,41 +22,23 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Required to use Flask sessions and the debug toolbar
 app.secret_key = "ABC"
 
-# Normally, if you use an undefined variable in Jinja2, it fails
-# silently. This is horrible. Fix this so that, instead, it raises an
-# error.
+
 app.jinja_env.undefined = StrictUndefined
 
 
+# @app.route('/google-login')
 
-# audios = UploadSet('audios', AUDIO)
-
-# app.config['UPLOADED_AUDIOS_DEST'] = '˜/src/podcast_studio/static/uploaded_mp3' #switch to s3 path
-# configure_uploads = UploadSet(app, audios)
-
-# @app.route("/")
-# """create a function that allows user to upload file"""
-
-# def upload_mp3_file():
-
-
+# @app.route('/')
+# def index():
 #     return render_template('upload_mp3.html')
 
-
-# @app.route("/upload", methods=['GET', 'POST'])
-# def upload():
-    
-#     if request.method == 'POST' and 'audio' in request.files: # in the tutorial it's singular 'audio' > ???
-#         filename = audios.save(request.files['audio'])
-#         return filename
-#     return render_template('upload_mp3.html')
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/upload', methods=['GET', 'POST']) # when i delete GET method and the if statment, I get message "Method not allowed."
 def upload_file():
     if request.method == 'POST':
         # check if the post request has the file part
@@ -72,12 +54,18 @@ def upload_file():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            flash('success')
-            return redirect(f'/static/uploaded_mp3/{filename}')
+
+            # my_podcast = f'/static/uploaded_mp3/{filename}'
+            return render_template('my_podcasts.html', filename=filename)
+            
+            # return redirect(f'/static/uploaded_mp3/{filename}')
 
     return render_template('upload_mp3.html')
-    
 
+# @app.route('/raw-podcast')
+    
+# when I have an successfull upload I don't want it to start playing, i want
+# to redirect to user homepage where they can see all the audios uploaded.
 
 
 if __name__ == "__main__":

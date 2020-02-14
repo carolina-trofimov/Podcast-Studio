@@ -12,6 +12,8 @@ class AudioType(db.Model):
     # Define your columns and/or relationships here
     audio_code = db.Column(db.String(10), nullable=False, primary_key=True,)
 
+
+
     def __repr__(self):
         """Return a human-readable representation of an Audio."""
 
@@ -27,6 +29,7 @@ class User(db.Model):
     user_id = db.Column(db.Integer, nullable=False, primary_key=True, autoincrement=True,)
     uname = db.Column(db.String(30), nullable=False, unique=True,)
     email = db.Column(db.String(100), nullable=False)
+    # password = db.Column(db.String(64), nullable=True) ADD this column???
 
     def __repr__(self):
         """Return a human-readable representation of an Audio."""
@@ -57,6 +60,8 @@ class Audio(db.Model):
                          )
 
     user = db.relationship('User', backref='audios')
+
+    audio_type = db.relationship('AudioType', backref='audios') 
 
     def __repr__(self):
         """Return a human-readable representation of an Audio."""

@@ -26,11 +26,64 @@ app.secret_key = "ABC"
 app.jinja_env.undefined = StrictUndefined
 
 
+
 # @app.route('/google-login')
 
-# @app.route('/')
-# def index():
-#     return render_template('upload_mp3.html')
+
+
+@app.route('/')
+def index():
+
+    return render_template('homepage.html')
+
+
+
+@app.route("/register")
+def register():
+    """Show registration form."""
+
+    return render_template("register.html")
+
+@app.route("/handle-registration", methods=["POST"])
+def register_user():
+    """Register a new user."""
+
+    new_email = request.form.get("email")
+    new_password = request.form.get("password")
+
+    if User.query.filter_by(email=new_email).first() is None:
+        user = User(email=new_email, uname=new_email) #, password=new_password)
+        db.session.add(user)
+        db.session.commit()
+        flash("New user created.") 
+        return redirect("/")
+    else:
+        flash("This user already exists.")
+        return redirect("/login")
+
+@app.route("/login")
+def show_login_form():
+    """Show login form."""
+
+    return render_template("login.html")
+
+
+@app.route("/handle-login", methods=["POST"])
+def login():
+    """Login user."""
+
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    user = User.query.filter_by(email=email).first()
+
+    if password == password:
+        # flash("Login successful.")
+        session["logged_in_user"] = user.user_id
+        return redirect("/process-upload")   # user-information?user={user.user_id}") Actually needs to redirect to /my-podcast when the route is done
+    else:
+        flash("Incorrect email or password.")
+        return redirect("/login")
 
 
 def allowed_file(filename):
@@ -38,50 +91,69 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route('/upload', methods=['GET']) # when i delete GET method and the if statment, I get message "Method not allowed."
+@app.route('/process-upload') 
 def upload_file():
-     # find out who my user is e query user and audio.
 
 
  return render_template('upload_mp3.html')
 
 
-@app.route('/process_upload', methods=['POST'])
+@app.route('/process-upload', methods=['POST'])
 def process_upload():
-    if request.method == 'POST':
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        file = request.files['file']
-        # if user does not select file, browser also
-        # submit an empty part without filename
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename) #create audio object add and commit on my table
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                                                                                #audio = Audio.query.all()
 
-            return render_template('my_podcasts.html',  filename=filename)
-    
-            # I NEED TO REDIRECT /PROCESS-UPLOAD TO /MY-PODCASTS ROUTE, BUT IDK WHAT 
-            #TO DO TO PASS 'FILENAME', SINCE REDIREC DOESN'T ALLOW MORE THAN 1 ARGUMENT.
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(request.url)
+    file = request.files['file']
+    # if user does not select file, browser also
+    # submit an empty part without filename
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(request.url)
 
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        audio_type = AudioType.query.get('pod')
+        user = User.query.get(session['logged_in_user'])
+        audio = Audio(user=user, audio_type=audio_type, name=filename, s3_path=os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        db.session.add(audio)                                                 #if user add podcast audio:
+        db.session.commit()                                                       #redirect("/my_podcasts")
+        flash("Audio added")                                                    #else:
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))              #redirect("/my_ads")
+
+        return redirect('/my-podcasts')
+
+                
+
+            
 @app.route('/my-podcasts')
 def my_podcasts():
 
+    user = User.query.get(session['logged_in_user'])
     
-    return render_template('my_podcasts.html')
 
-            # I need to have an user object # i can live an empty string for my S3 path on the tables.
+
+    return render_template('my_podcasts.html', audios=user.audios)
+
+                                    
 
             
-           #add relatioships 
+@app.route('/my-ads')
+def my_ads():
+
+    return render_template('my_ads.html')
 
 
 
-   
+@app.route("/logout")
+def logout():
+    """Logout user."""
+
+    del session["logged_in_user"]
+    flash("Logout successful.")
+
+    return redirect("/")
 
 # @app.route('/raw-podcast')
     

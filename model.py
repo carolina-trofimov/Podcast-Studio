@@ -61,7 +61,7 @@ class Audio(db.Model):
 
     user = db.relationship('User', backref='audios')
 
-    audio_type = db.relationship('AudioType', backref='audios') 
+    audio_type = db.relationship('AudioType', backref='audios')  
 
     def __repr__(self):
         """Return a human-readable representation of an Audio."""

@@ -8,16 +8,19 @@
 
       <input type=file name=file>
       <input type=submit value=Upload>
+      <input type="hidden" name="audio_type" value="pod">
     </form>
   </div>
 
   <div class="uploadmp3" id="podcast-audio">
       <h1>Upload Ad</h1>
-      <form method='post' enctype=multipart/form-data>
+      <form method='post' action='/process-upload' enctype=multipart/form-data>
         <input type=file name=file>
         <input type=submit value=Upload>
+        <input type="hidden" name="audio_type" value="ad">
       </form>
     </div>
 
 {% endblock %}
+
 

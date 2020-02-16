@@ -91,7 +91,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route('/process-upload') 
+@app.route('/upload') 
 def upload_file():
 
 
@@ -101,7 +101,6 @@ def upload_file():
 @app.route('/process-upload', methods=['POST'])
 def process_upload():
                                                                                 #audio = Audio.query.all()
-
     if 'file' not in request.files:
         flash('No file part')
         return redirect(request.url)
@@ -114,7 +113,8 @@ def process_upload():
 
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        audio_type = AudioType.query.get('pod')
+        audio_type = request.form.get('audio_type')
+        audio_type = AudioType.query.get(audio_type)
         user = User.query.get(session['logged_in_user'])
         audio = Audio(user=user, audio_type=audio_type, name=filename, s3_path=os.path.join(app.config['UPLOAD_FOLDER'], filename))
         db.session.add(audio)                                                 #if user add podcast audio:
@@ -122,8 +122,12 @@ def process_upload():
         flash("Audio added")                                                    #else:
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))              #redirect("/my_ads")
 
-        return redirect('/my-podcasts')
+        if audio.audio_code == 'pod':
 
+            return redirect('/my-podcasts')
+        else:
+
+            return redirect('/my-ads')
                 
 
             
@@ -132,9 +136,10 @@ def my_podcasts():
 
     user = User.query.get(session['logged_in_user'])
     
+    audio = Audio.query.filter_by(user_id=user.user_id, audio_code='pod')
 
 
-    return render_template('my_podcasts.html', audios=user.audios)
+    return render_template('my_podcasts.html', audios=audio)
 
                                     
 
@@ -142,7 +147,11 @@ def my_podcasts():
 @app.route('/my-ads')
 def my_ads():
 
-    return render_template('my_ads.html')
+    user = User.query.get(session['logged_in_user'])
+    
+    audio = Audio.query.filter_by(user_id=user.user_id, audio_code='ad')
+
+    return render_template('my_ads.html', audios=audio)
 
 
 

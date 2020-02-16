@@ -4,7 +4,15 @@
 
 <h3>My Ads</h3>
 
+<ul>
+    {% for audio in audios %}
+    <li>
+    {{ audio.name }} 
+
 <audio controls id="audio">
-<source src=/static/uploaded_mp3/{{filename}}>
+<source src="{{audio.s3_path}}">
+
+{% endfor %}
 
 {% endblock content %}
+

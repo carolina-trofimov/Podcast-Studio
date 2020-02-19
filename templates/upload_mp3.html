@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
 
+{% if session.get("logged_in_user") %}
+  <a href="/my-raw-podcasts">raw-podcasts</a> <br>
+  <a href="/my-ads">ads</a>
+{% endif %}
+
 
   <div class="uploadmp3" id="podcast-audio">
     <h1>Upload Podcast</h1>

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+<ul>
+    {% for ad in ads %}
+        {% if ad.audio_code == "ad" %}
+    <li>
+    <input type="checkbox" id="ads" name="ads">
+      <label for="ad">{{ ad.name }}</label> 
+      <audio controls id="audio">
+        <source src="{{ad.s3_path}}">
+      </audio>
+      
+    </li>
+    {% endif %}
+{% endfor %}
+
+</ul>
+
+
+
+{% endblock %}

@@ -1,53 +1,42 @@
 
 from jinja2 import StrictUndefined
-
 from flask import (Flask, render_template, redirect, request, flash, session, url_for)
-
 from flask_debugtoolbar import DebugToolbarExtension
-
 from model import connect_to_db, db, AudioType, User, Audio
-
 from flask_uploads import UploadSet, configure_uploads, AUDIO
-
 from werkzeug.utils import secure_filename
-
 import os
+from pydub import AudioSegment
+# from ffprobe import FFProbe
 
-UPLOAD_FOLDER = 'static/uploaded_mp3'
-ALLOWED_EXTENSIONS = {'mp3'}
+UPLOAD_FOLDER = "static/uploaded_mp3"
+ALLOWED_EXTENSIONS = {"mp3"}
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Required to use Flask sessions and the debug toolbar
 app.secret_key = "ABC"
 
-
 app.jinja_env.undefined = StrictUndefined
-
-
 
 # @app.route('/google-login')
 
 
-
-@app.route('/')
+@app.route("/")
 def index():
-
-    return render_template('homepage.html')
-
+    """Show the homepage."""
+    return render_template("homepage.html")
 
 
 @app.route("/register")
 def register():
     """Show registration form."""
-
     return render_template("register.html")
 
 @app.route("/handle-registration", methods=["POST"])
 def register_user():
     """Register a new user."""
-
     new_email = request.form.get("email")
     new_password = request.form.get("password")
 
@@ -64,94 +53,117 @@ def register_user():
 @app.route("/login")
 def show_login_form():
     """Show login form."""
-
     return render_template("login.html")
 
 
 @app.route("/handle-login", methods=["POST"])
 def login():
     """Login user."""
-
     email = request.form.get("email")
     password = request.form.get("password")
 
     user = User.query.filter_by(email=email).first()
 
     if password == password:
-        # flash("Login successful.")
         session["logged_in_user"] = user.user_id
-        return redirect("/process-upload")   # user-information?user={user.user_id}") Actually needs to redirect to /my-podcast when the route is done
+        return redirect("/upload")
     else:
         flash("Incorrect email or password.")
         return redirect("/login")
 
 
 def allowed_file(filename):
+    """Check if file is in the correct extension mp3."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route('/upload') 
-def upload_file():
+@app.route("/upload")
+def upload():
+    """Show upload form."""
+    return render_template('upload_mp3.html')
 
 
- return render_template('upload_mp3.html')
-
-
-@app.route('/process-upload', methods=['POST'])
+@app.route("/process-upload", methods=["POST"])
 def process_upload():
-                                                                                #audio = Audio.query.all()
+    """Save uploaded file and add it to database."""
     if 'file' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
-    file = request.files['file']
-    # if user does not select file, browser also
-    # submit an empty part without filename
-    if file.filename == '':
-        flash('No selected file')
-        return redirect(request.url)
+        flash("No file found")
+        return redirect('/upload')
+
+    file = request.files["file"]
+    if file.filename == "":
+        flash("No selected file")
+        return redirect("/upload")
 
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        audio_type = request.form.get('audio_type')
+        audio_type = request.form.get("audio_type")
         audio_type = AudioType.query.get(audio_type)
-        user = User.query.get(session['logged_in_user'])
-        audio = Audio(user=user, audio_type=audio_type, name=filename, s3_path=os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        db.session.add(audio)                                                 #if user add podcast audio:
-        db.session.commit()                                                       #redirect("/my_podcasts")
-        flash("Audio added")                                                    #else:
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))              #redirect("/my_ads")
+        user = User.query.get(session["logged_in_user"])
+        audio = Audio(user=user, audio_type=audio_type, name=filename, s3_path=os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        db.session.add(audio)
+        db.session.commit()
+        flash("Audio added")
+        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
-        if audio.audio_code == 'pod':
+        if audio.audio_code == "pod":
 
-            return redirect('/my-podcasts')
+            return redirect("/my-raw-podcasts")
         else:
 
-            return redirect('/my-ads')
+            return redirect("/my-ads")
                 
 
-            
-@app.route('/my-podcasts')
+@app.route("/my-raw-podcasts")
 def my_podcasts():
+    """Show raw-podcast list."""
+    user = User.query.get(session["logged_in_user"])
+    audio = Audio.query.filter_by(user_id=user.user_id, audio_code="pod")
+    return render_template("my_raw_podcasts.html", audios=audio)
 
-    user = User.query.get(session['logged_in_user'])
-    
-    audio = Audio.query.filter_by(user_id=user.user_id, audio_code='pod')
-
-
-    return render_template('my_podcasts.html', audios=audio)
-
-                                    
 
             
-@app.route('/my-ads')
+@app.route("/my-ads")
 def my_ads():
+    """Show ads list."""
+    user = User.query.get(session["logged_in_user"])
+    audio = Audio.query.filter_by(user_id=user.user_id, audio_code="ad")
+    return render_template("my_ads.html", audios=audio)
 
-    user = User.query.get(session['logged_in_user'])
+
+@app.route("/edit-podcast")
+def edit_podcast():
+    """Allow user to ad add into podcast audio"""
+    # #exemple    
+    # # audio1 = AudioSegment.from_file("/path/to/audio1.mp3", format="mp3")
+    # # audio2 = AudioSegment.from_file("/path/to/audio2.mp3", format="mp3")
+    # # podcast = audio1.append(sound2, crossfade=2000)
     
-    audio = Audio.query.filter_by(user_id=user.user_id, audio_code='ad')
 
-    return render_template('my_ads.html', audios=audio)
+    #instantiate user to access user object
+    user = User.query.get(session["logged_in_user"]) #user_id
+    audio_object = user.audios # this is a list of audio objects
+    #instantiate audio object as pod to access podcast name to concatenate
+    pod = user.audios[0]
+    print("#########################", pod.s3_path)
+    audio1 = AudioSegment.from_file(pod.s3_path, format="mp3")
+     #instantiate audio object as ad to access ad name to concatenate
+    ad = user.audios
+
+
+    audio2 = AudioSegment.from_file(user.audios[0].s3_path, format="mp3")
+
+    edited_pod = audio2 + audio1
+    # edited_pod = audio1.append(audio2, crossfade=2000)
+
+    return render_template("edit_audio.html", edited_pod=edited_pod, ads=ad)
+
+
+# @app.route("/delete-audio/<int:<audio_id/", methods=["GET", "POST"])
+# def delete_audio(audio_id):
+#     """Allow user to delete an audio"""
+#     new_id
 
 
 
@@ -164,10 +176,6 @@ def logout():
 
     return redirect("/")
 
-# @app.route('/raw-podcast')
-    
-# when I have an successfull upload I don't want it to start playing, i want
-# to redirect to user homepage where they can see all the audios uploaded.
 
 
 if __name__ == "__main__":

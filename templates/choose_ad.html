@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+<ul>
+    {% for audio in audios %}
+        {% if audio.audio_code == "ad" %}
+    <li>
+    <input type="radio" id="{{ audio.audio_id  }}" name="ads">
+      <label for="ad">{{ audio.name }}</label> 
+      <audio controls id="audio">
+        <source src="{{audio.s3_path}}">
+      </audio>
+      
+    </li>
+    {% endif %}
+{% endfor %}
+
+</ul>
+
+{% endblock %}

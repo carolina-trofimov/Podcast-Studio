@@ -13,12 +13,13 @@
       <audio controls id="audio">
         <source src="{{audio.s3_path}}">
       </audio>
-     <a href="edit-podcast"><button class="edit" type="button">edit</button></a>
+     <a href="choose-ad"><button id="{{ audio.audio_id }}" class="edit" type="button">edit</button></a>
       <button class="delete" type="button">delete</button>
     
     </li>
 {% endfor %}
 </ul>
+
 {% endblock content %}
 
 

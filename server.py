@@ -132,32 +132,48 @@ def my_ads():
     return render_template("my_ads.html", audios=audio)
 
 
-@app.route("/edit-podcast")
-def edit_podcast():
-    """Allow user to ad add into podcast audio"""
-    # #exemple    
+@app.route("/choose-ad")
+def choose_ad():
+    """Allow user to choose and ad"""
+    user = User.query.get(session["logged_in_user"]) #user_id
+    
+    audios = user.audios
+
+    
+    return render_template("choose_ad.html", audios=audios)
+
+@app.route("/concatenate-audios")
+def concatenate_audios():
+    """Allow user to add an ad into a podcast audio"""
+    # #example    
     # # audio1 = AudioSegment.from_file("/path/to/audio1.mp3", format="mp3")
     # # audio2 = AudioSegment.from_file("/path/to/audio2.mp3", format="mp3")
     # # podcast = audio1.append(sound2, crossfade=2000)
-    
 
-    #instantiate user to access user object
-    user = User.query.get(session["logged_in_user"]) #user_id
-    audio_object = user.audios # this is a list of audio objects
+    user = User.query.get(session["logged_in_user"])
+
+    # print("this is a list >>>>>>>>>>>>>>>>>>>>>>>", user.audios)
+    # audio_object = user.audios # this is a list of audio objects
+
     #instantiate audio object as pod to access podcast name to concatenate
     pod = user.audios[0]
-    print("#########################", pod.s3_path)
+    # print("this is a path >>>>>>>>>>>>>>>", pod.s3_path)
     audio1 = AudioSegment.from_file(pod.s3_path, format="mp3")
-     #instantiate audio object as ad to access ad name to concatenate
-    ad = user.audios
+    #instantiate audio object as ad to access ad name to concatenate
+    # print("this is audio1 >>>>>>>>>>>>>", audio1)
+    ad = user.audios[1]
+    audio2 = AudioSegment.from_file(ad.s3_path, format="mp3")
+
+    # edited_pod = audio2 + audio1
+    edited_pod = audio1.append(audio2, crossfade=2000).export("static/podcasts/edited_pod.mp3", format="mp3")
+    # edited_pod.export("/static/podcasts", format="mp3")
 
 
-    audio2 = AudioSegment.from_file(user.audios[0].s3_path, format="mp3")
+    db.session.add(edited_pod)
+    db.session.commit()
 
-    edited_pod = audio2 + audio1
-    # edited_pod = audio1.append(audio2, crossfade=2000)
+    return render_template("my_podcasts.html", edited_pod=edited_pod)
 
-    return render_template("edit_audio.html", edited_pod=edited_pod, ads=ad)
 
 
 # @app.route("/delete-audio/<int:<audio_id/", methods=["GET", "POST"])
@@ -165,13 +181,11 @@ def edit_podcast():
 #     """Allow user to delete an audio"""
 #     new_id
 
-
-
 @app.route("/logout")
 def logout():
     """Logout user."""
 
-    del session["logged_in_user"]
+    del session["logged_in_user"] 
     flash("Logout successful.")
 
     return redirect("/")

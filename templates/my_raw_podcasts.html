@@ -14,12 +14,11 @@
       <audio controls id="audio">
         <source src="{{audio.s3_path}}">
       </audio>
-      <form enctype= "form-data" action="/concatenate-audios">
-        <button href="/concatenate-audios" id="{{ audio.audio_id }}" class="edit" type="submit">edit</button>
-        <input type="hidden" name="audio_id">
+      <form enctype= "form-data" action="/choose-ad">
+        <button sclass="edit" type="submit">edit</button>
+        <input type="hidden" name="raw_pod_id" value="{{audio.audio_id}}">
       </form>
 
-     
       <button class="delete" type="button">delete</button>
     </li>
 {% endfor %}

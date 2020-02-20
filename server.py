@@ -142,29 +142,31 @@ def choose_ad():
     
     return render_template("choose_ad.html", audios=audios)
 
-@app.route("/concatenate-audios")
+@app.route("/concatenate-audios", methods=["GET", "POST"])
 def concatenate_audios():
     """Allow user to add an ad into a podcast audio"""
 
     user = User.query.get(session["logged_in_user"])
-
     #instantiate audio object as pod to access podcast name to concatenate
-    pod = user.audios[0]
+    pod_id = request.form.get("raw_pod_id")
+    pod = Audio.query.get(pod_id)
 
     audio1 = AudioSegment.from_file(pod.s3_path, format="mp3")
     #instantiate audio object as ad to access ad name to concatenate
     # print("this is audio1 >>>>>>>>>>>>>", audio1)
-    ad = user.audios[1]
+    ad_id = request.form.get("ad_id")
+    ad = Audio.query.get(ad_id)
+
     audio2 = AudioSegment.from_file(ad.s3_path, format="mp3")
 
     # edited_pod = audio2 + audio1
     edited_pod = audio1.append(audio2, crossfade=2000)
-    edited_pod.export(f"static/podcasts/{pod.name}-{ad.name}.mp3", format="mp3")
+    edited_pod.export(f"static/podcasts/{pod.name}.mp3", format="mp3")
 
-    podcast_result = Audio(name=f"{pod.name}-{ad.name}.mp3", s3_path="static/podcasts/", audio_code='edt')
+    podcast_result = Audio(name=f"{pod.name}.mp3", s3_path=f"static/podcasts/{pod.name}.mp3", audio_code='edt', user=user)
 
-    # db.session.add(edited_pod)
-    # db.session.commit()
+    db.session.add(podcast_result)
+    db.session.commit()
 
     #NOTES:
         # I need to rewrite the code in a more generic way:

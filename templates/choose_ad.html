@@ -3,19 +3,21 @@
 
 
 <ul>
+  <form enctype='multipart/form-data' action='/concatenate-audios' method='post'>
     {% for audio in audios %}
         {% if audio.audio_code == "ad" %}
+    
     <li>
     <input type="radio" id="{{ audio.audio_id  }}" name="ads">
       <label for="ad">{{ audio.name }}</label> 
       <audio controls id="audio">
         <source src="{{audio.s3_path}}">
-      </audio>
-      
+      </audio> 
     </li>
+   
     {% endif %}
 {% endfor %}
-
+  </form>
 </ul>
 
 {% endblock %}

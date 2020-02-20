@@ -9,13 +9,18 @@
 <ul>
     {% for audio in audios %}
     <li>
+    
       {{ audio.name }} 
       <audio controls id="audio">
         <source src="{{audio.s3_path}}">
       </audio>
-     <a href="choose-ad"><button id="{{ audio.audio_id }}" class="edit" type="button">edit</button></a>
+      <form enctype= "form-data" action="/concatenate-audios">
+        <button href="/concatenate-audios" id="{{ audio.audio_id }}" class="edit" type="submit">edit</button>
+        <input type="hidden" name="audio_id">
+      </form>
+
+     
       <button class="delete" type="button">delete</button>
-    
     </li>
 {% endfor %}
 </ul>

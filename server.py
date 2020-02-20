@@ -145,19 +145,12 @@ def choose_ad():
 @app.route("/concatenate-audios")
 def concatenate_audios():
     """Allow user to add an ad into a podcast audio"""
-    # #example    
-    # # audio1 = AudioSegment.from_file("/path/to/audio1.mp3", format="mp3")
-    # # audio2 = AudioSegment.from_file("/path/to/audio2.mp3", format="mp3")
-    # # podcast = audio1.append(sound2, crossfade=2000)
 
     user = User.query.get(session["logged_in_user"])
 
-    # print("this is a list >>>>>>>>>>>>>>>>>>>>>>>", user.audios)
-    # audio_object = user.audios # this is a list of audio objects
-
     #instantiate audio object as pod to access podcast name to concatenate
     pod = user.audios[0]
-    # print("this is a path >>>>>>>>>>>>>>>", pod.s3_path)
+
     audio1 = AudioSegment.from_file(pod.s3_path, format="mp3")
     #instantiate audio object as ad to access ad name to concatenate
     # print("this is audio1 >>>>>>>>>>>>>", audio1)
@@ -165,12 +158,24 @@ def concatenate_audios():
     audio2 = AudioSegment.from_file(ad.s3_path, format="mp3")
 
     # edited_pod = audio2 + audio1
-    edited_pod = audio1.append(audio2, crossfade=2000).export("static/podcasts/edited_pod.mp3", format="mp3")
-    # edited_pod.export("/static/podcasts", format="mp3")
+    edited_pod = audio1.append(audio2, crossfade=2000)
+    edited_pod.export(f"static/podcasts/{pod.name}-{ad.name}.mp3", format="mp3")
 
+    podcast_result = Audio(name=f"{pod.name}-{ad.name}.mp3", s3_path="static/podcasts/", audio_code='edt')
 
-    db.session.add(edited_pod)
-    db.session.commit()
+    # db.session.add(edited_pod)
+    # db.session.commit()
+
+    #NOTES:
+        # I need to rewrite the code in a more generic way:
+        # the variable pod is gonna be whatever podcast user wants to edit:
+            # on '/my_raw_podcast' each raw-podcst has an edit button, that's
+            # how the user can choose which audio to edit
+
+        # the variable ad has to be whatever ad user wants to add:
+            # on '/choose-ad' it shows the ads user can select as a radio html
+        
+        #edited_pod has to be an Audio object, so I can add into my database.
 
     return render_template("my_podcasts.html", edited_pod=edited_pod)
 

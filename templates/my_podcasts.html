@@ -4,6 +4,26 @@
 
 <h3>My Podcasts</h3>
 
+<ul>
+    {% for edt_pod in audios %}
+    <li>
+    
+      {{ edt_pod.name }} 
+      <audio controls id="audio">
+        <source src="{{edt_pod.s3_path}}">
+      </audio>
+      <form enctype= "form-data" action="/my-podcasts">
+       <!--  <button sclass="edit" type="submit">edit</button> -->
+        <input type="hidden" name="edt_id" value="{{edt_pod.audio_id}}">
+      </form>
+
+      <form enctype="form-data" action="/delete-audio/{{edt_pod.audio_id}}" method="POST">
+        <input type="hidden" name="delete-audio" value="{{edt_pod.audio_id}}">
+        <button href="/delete-audio">delete</button>
+      </form>
+    </li>
+{% endfor %}
+</ul>
 
 
 

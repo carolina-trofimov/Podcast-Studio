@@ -12,8 +12,10 @@
       <audio controls id="audio">
         <source src="{{audio.s3_path}}">
       </audio>
-      <button class="delete" type="button">delete</button>
-    </li>
+      <form enctype="form-data" action="/delete-audio/{{audio.audio_id}}" method="POST">
+        <input type="hidden" name="delete-audio" value="{{audio.audio_id}}">
+        <button href="/delete-audio">delete</button>
+      </form>
 {% endfor %}
 </ul>
 {% endblock content %}

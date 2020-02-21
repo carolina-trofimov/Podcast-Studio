@@ -182,7 +182,6 @@ def my_podcasts():
 @app.route("/delete-audio/<int:audio_id>", methods=["GET", "POST"])
 def delete_audio(audio_id):
     """Allow user to delete an audio"""
-    print("on delete route", audio_id)
 
     
     user = User.query.get(session["logged_in_user"])
@@ -190,23 +189,29 @@ def delete_audio(audio_id):
         new_id = audio_id
         audio = Audio.query.filter_by(audio_id=audio_id).one()
 
-        file_to_remove = app.config["UPLOAD_FOLDER"] + "/" + audio.name
-        print(">>>>>>>>>>>>>>>>>>", audio.s3_path)
-        
-        db.session.delete(audio)
-        db.session.commit()
-
-        os.remove(audio.s3_path)
-        # print(file_to_remove)
-        # os.remove(os.path.join(app.config["UPLOAD_FOLDER"], audio.name))
-       
-
         if audio.audio_code == "ad":
-            return redirect("/my_ads")
+            
+            file_to_remove = app.config["UPLOAD_FOLDER"] + "/" + audio.name
+            db.session.delete(audio)
+            db.session.commit()
+            os.remove(audio.s3_path)
+
+            return redirect("/my-ads")
+
 
         elif audio.audio_code == "pod":
+
+            file_to_remove = app.config["UPLOAD_FOLDER"] + "/" + audio.name
+            db.session.delete(audio)
+            db.session.commit()
+            os.remove(audio.s3_path)
             return redirect("/my-raw-podcasts")
-        else:
+        elif audio.audio_code == "edt":
+            UPLOAD_FOLDER = "static/podcasts/"
+            file_to_remove = app.config["UPLOAD_FOLDER"] + "/" + audio.name
+            db.session.delete(audio)
+            db.session.commit()
+            os.remove(audio.s3_path)
             return redirect("/my-podcasts")
 
 

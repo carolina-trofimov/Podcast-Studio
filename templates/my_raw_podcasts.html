@@ -2,8 +2,9 @@
 {% block content %}
 
 
-<h3>My raw-podcasts</h3>
+<a href="/upload">upload</a> <br>
 
+<h3>My raw-podcasts</h3>
 
 
 <ul>
@@ -23,7 +24,7 @@
         <input type="hidden" name="delete-audio" value="{{audio.audio_id}}">
         <button href="/delete-audio">delete</button>
       </form>
-      
+
     </li>
 {% endfor %}
 </ul>

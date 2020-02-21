@@ -116,7 +116,7 @@ def process_upload():
                 
 
 @app.route("/my-raw-podcasts")
-def my_podcasts():
+def my_raw_podcasts():
     """Show raw-podcast list."""
     user = User.query.get(session["logged_in_user"])
     audio = Audio.query.filter_by(user_id=user.user_id, audio_code="pod")
@@ -168,25 +168,47 @@ def concatenate_audios():
     db.session.add(podcast_result)
     db.session.commit()
 
-    #NOTES:
-        # I need to rewrite the code in a more generic way:
-        # the variable pod is gonna be whatever podcast user wants to edit:
-            # on '/my_raw_podcast' each raw-podcst has an edit button, that's
-            # how the user can choose which audio to edit
+    
+    return redirect("/my-podcasts")
 
-        # the variable ad has to be whatever ad user wants to add:
-            # on '/choose-ad' it shows the ads user can select as a radio html
+@app.route("/my-podcasts")
+def my_podcasts():
+    user = User.query.get(session["logged_in_user"])
+    edt_pod = Audio.query.filter_by(user_id=user.user_id, audio_code='edt')
+    # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", edt_pod)
+
+    return render_template("my_podcasts.html", audios=edt_pod)
+
+@app.route("/delete-audio/<int:audio_id>", methods=["GET", "POST"])
+def delete_audio(audio_id):
+    """Allow user to delete an audio"""
+    print("on delete route", audio_id)
+
+    
+    user = User.query.get(session["logged_in_user"])
+    if user:
+        new_id = audio_id
+        audio = Audio.query.filter_by(audio_id=audio_id).one()
+
+        file_to_remove = app.config["UPLOAD_FOLDER"] + "/" + audio.name
+        print(">>>>>>>>>>>>>>>>>>", audio.s3_path)
         
-        #edited_pod has to be an Audio object, so I can add into my database.
+        db.session.delete(audio)
+        db.session.commit()
 
-    return render_template("my_podcasts.html", edited_pod=edited_pod)
+        os.remove(audio.s3_path)
+        # print(file_to_remove)
+        # os.remove(os.path.join(app.config["UPLOAD_FOLDER"], audio.name))
+       
 
+        if audio.audio_code == "ad":
+            return redirect("/my_ads")
 
+        elif audio.audio_code == "pod":
+            return redirect("/my-raw-podcasts")
+        else:
+            return redirect("/my-podcasts")
 
-# @app.route("/delete-audio/<int:<audio_id/", methods=["GET", "POST"])
-# def delete_audio(audio_id):
-#     """Allow user to delete an audio"""
-#     new_id
 
 @app.route("/logout")
 def logout():

@@ -18,8 +18,12 @@
         <button sclass="edit" type="submit">edit</button>
         <input type="hidden" name="raw_pod_id" value="{{audio.audio_id}}">
       </form>
-
-      <button class="delete" type="button">delete</button>
+      
+      <form enctype="form-data" action="/delete-audio/{{audio.audio_id}}" method="POST">
+        <input type="hidden" name="delete-audio" value="{{audio.audio_id}}">
+        <button href="/delete-audio">delete</button>
+      </form>
+      <!-- <button href="/delete-audio" class="delete" type="button">delete</button> -->
     </li>
 {% endfor %}
 </ul>

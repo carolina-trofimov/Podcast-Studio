@@ -1,4 +1,6 @@
-
+import boto3
+import logging
+from botocore.exceptions import ClientError
 from jinja2 import StrictUndefined
 from flask import (Flask, render_template, redirect, request, flash, session, url_for)
 from flask_debugtoolbar import DebugToolbarExtension
@@ -6,21 +8,25 @@ from model import connect_to_db, db, AudioType, User, Audio
 from flask_uploads import UploadSet, configure_uploads, AUDIO
 from werkzeug.utils import secure_filename
 import os
+import io
 from pydub import AudioSegment
-# from ffprobe import FFProbe
 
-UPLOAD_FOLDER = "static/uploaded_mp3"
+# use Amazon S3
+s3 = boto3.resource('s3')
+s3_client = s3.meta.client
+bucket = s3.Bucket('podcaststudio')
+
+
+# UPLOAD_FOLDER = 
 ALLOWED_EXTENSIONS = {"mp3"}
 
 app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+# app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Required to use Flask sessions and the debug toolbar
 app.secret_key = "ABC"
 
 app.jinja_env.undefined = StrictUndefined
-
-# @app.route('/google-login')
 
 
 @app.route("/")
@@ -33,6 +39,7 @@ def index():
 def register():
     """Show registration form."""
     return render_template("register.html")
+
 
 @app.route("/handle-registration", methods=["POST"])
 def register_user():
@@ -97,22 +104,49 @@ def process_upload():
         return redirect("/upload")
 
     if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
+
+        filename = secure_filename(file.filename) 
         audio_type = request.form.get("audio_type")
-        audio_type = AudioType.query.get(audio_type)
-        user = User.query.get(session["logged_in_user"])
-        audio = Audio(user=user, audio_type=audio_type, name=filename, s3_path=os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        db.session.add(audio)
-        db.session.commit()
+
+        save_file_to_s3(filename, audio_type, request.files['file'])
+        save_audio_to_db(filename, audio_type)
+
         flash("Audio added")
-        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
 
-        if audio.audio_code == "pod":
-
+        if audio_type == "pod":
             return redirect("/my-raw-podcasts")
         else:
-
             return redirect("/my-ads")
+   
+   #refactor functions below into helper     
+def save_file_to_s3(filename, audio_type, file):
+
+    if audio_type == "pod":
+        s3_path = f"raw_podcasts/{filename}"
+    else:
+        s3_path = f"ads/{filename}"
+    
+    s3_client.put_object(Body=file,
+                      Bucket="podcaststudio",
+                      Key=s3_path,
+                      ContentType="mp3",
+                      ACL="public-read")
+
+def save_audio_to_db(filename, audio_type):
+
+    if audio_type == "pod":
+        s3_path = f"https://podcaststudio.s3-us-west-1.amazonaws.com/raw_podcasts/{filename}"
+    else:
+        s3_path = f"https://podcaststudio.s3-us-west-1.amazonaws.com/ads/{filename}"
+
+    audio_type = AudioType.query.get(audio_type)
+    user = User.query.get(session["logged_in_user"])
+    audio = Audio(user=user, audio_type=audio_type, name=filename, s3_path=s3_path)
+    db.session.add(audio)
+    db.session.commit()
+
+    return audio.audio_code
+
                 
 
 @app.route("/my-raw-podcasts")
@@ -150,23 +184,28 @@ def concatenate_audios():
     #instantiate audio object as pod to access podcast name to concatenate
     pod_id = request.form.get("raw_pod_id")
     pod = Audio.query.get(pod_id)
+    # print("\n\n\n\n\n\n\n\n\n\n", pod.s3_path)
+    # file1 = io.BytesIO()
+    # s3.Object("podcaststudio", "raw_podcasts/raw_pod_test1.mp3").download_fileobj(file1)
 
     audio1 = AudioSegment.from_file(pod.s3_path, format="mp3")
     #instantiate audio object as ad to access ad name to concatenate
-    # print("this is audio1 >>>>>>>>>>>>>", audio1)
-    ad_id = request.form.get("ad_id")
-    ad = Audio.query.get(ad_id)
+    print("\n\n\n\n\nthis is audio1 >>>>>>>>>>>>>", audio1, "\n\n\n\n\n\n\n")
+    # ad_id = request.form.get("ad_id")
+    # ad = Audio.query.get(ad_id)
 
-    audio2 = AudioSegment.from_file(ad.s3_path, format="mp3")
+    # print("\n\n\n\n\n\n\n\n", ad.s3_path)
 
-    # edited_pod = audio2 + audio1
-    edited_pod = audio1.append(audio2, crossfade=2000)
-    edited_pod.export(f"static/podcasts/{pod.name}.mp3", format="mp3")
+    # audio2 = AudioSegment.from_file(ad.s3_path, format="mp3")
 
-    podcast_result = Audio(name=f"{pod.name}.mp3", s3_path=f"static/podcasts/{pod.name}.mp3", audio_code='edt', user=user)
+    # # edited_pod = audio2 + audio1
+    # edited_pod = audio2.append(audio1, crossfade=2000)
+    # edited_pod.export(f"https://podcaststudio.s3-us-west-1.amazonaws.com/podcasts/{filename}", format="mp3")
 
-    db.session.add(podcast_result)
-    db.session.commit()
+    # podcast_result = Audio(name=f"{pod.name}-{ad.name}", s3_path=f"https://podcaststudio.s3-us-west-1.amazonaws.com/raw_podcasts/{pod.name}-{ad.name}", audio_code='edt', user=user)
+
+    # db.session.add(podcast_result)
+    # db.session.commit()
 
     
     return redirect("/my-podcasts")
@@ -189,26 +228,24 @@ def delete_audio(audio_id):
         new_id = audio_id
         audio = Audio.query.filter_by(audio_id=audio_id).one()
 
-        if audio.audio_code == "ad":
-            
-            file_to_remove = app.config["UPLOAD_FOLDER"] + "/" + audio.name
+        if audio.audio_code == "ad":    
+            file_to_remove = f"https://podcaststudio.s3-us-west-1.amazonaws.com/ads/{audio.name}"
             db.session.delete(audio)
             db.session.commit()
             os.remove(audio.s3_path)
-
             return redirect("/my-ads")
 
 
         elif audio.audio_code == "pod":
-
-            file_to_remove = app.config["UPLOAD_FOLDER"] + "/" + audio.name
+            file_to_remove = f"https://podcaststudio.s3-us-west-1.amazonaws.com/raw_podcasts/{audio.name}"
             db.session.delete(audio)
             db.session.commit()
             os.remove(audio.s3_path)
             return redirect("/my-raw-podcasts")
+
         elif audio.audio_code == "edt":
             UPLOAD_FOLDER = "static/podcasts/"
-            file_to_remove = app.config["UPLOAD_FOLDER"] + "/" + audio.name
+            file_to_remove = f"https://podcaststudio.s3-us-west-1.amazonaws.com/podcasts/{audio.name}"
             db.session.delete(audio)
             db.session.commit()
             os.remove(audio.s3_path)

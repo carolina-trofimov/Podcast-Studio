@@ -123,8 +123,10 @@ def save_file_to_s3(filename, audio_type, file):
 
     if audio_type == "pod":
         s3_path = f"raw_podcasts/{filename}"
-    else:
+    elif audio_type == "ad":
         s3_path = f"ads/{filename}"
+    else:
+        s3_path = f"podcasts/{filename}"
     
     s3_client.put_object(Body=file,
                       Bucket="podcaststudio",
@@ -184,28 +186,36 @@ def concatenate_audios():
     #instantiate audio object as pod to access podcast name to concatenate
     pod_id = request.form.get("raw_pod_id")
     pod = Audio.query.get(pod_id)
-    # print("\n\n\n\n\n\n\n\n\n\n", pod.s3_path)
-    # file1 = io.BytesIO()
-    # s3.Object("podcaststudio", "raw_podcasts/raw_pod_test1.mp3").download_fileobj(file1)
-
-    audio1 = AudioSegment.from_file(pod.s3_path, format="mp3")
+    # print("\n\n\n\n\n\n\n\n\n\n", pod.name)
+    file1 = io.BytesIO()
+    s3.Object("podcaststudio", f"raw_podcasts/{pod.name}").download_fileobj(file1)
+    file1.seek(0) 
+    audio1 = AudioSegment.from_file(file1, format="mp3")
     #instantiate audio object as ad to access ad name to concatenate
-    print("\n\n\n\n\nthis is audio1 >>>>>>>>>>>>>", audio1, "\n\n\n\n\n\n\n")
-    # ad_id = request.form.get("ad_id")
-    # ad = Audio.query.get(ad_id)
+    # print("\n\n\n\n\nthis is audio1 >>>>>>>>>>>>>", audio1, "\n\n\n\n\n\n\n")
+    ad_id = request.form.get("ad_id")
+    ad = Audio.query.get(ad_id)
 
     # print("\n\n\n\n\n\n\n\n", ad.s3_path)
+    file2 = io.BytesIO()
+    s3.Object("podcaststudio", f"ads/{ad.name}").download_fileobj(file2)
+    file2.seek(0)
+    audio2 = AudioSegment.from_file(file2, format="mp3")
 
-    # audio2 = AudioSegment.from_file(ad.s3_path, format="mp3")
+    # edited_pod = audio2 + audio1
+    edited_pod = audio2.append(audio1, crossfade=2000)
+    
+    file3 = io.BytesIO()
+    edited_pod.export(file3, format="mp3")
+    file3.seek(0)
+    
+    save_file_to_s3(f"{pod.name}-{ad.name}", "edt", file3)
+    save_audio_to_db(f"{pod.name}-{ad.name}", "edt")
 
-    # # edited_pod = audio2 + audio1
-    # edited_pod = audio2.append(audio1, crossfade=2000)
-    # edited_pod.export(f"https://podcaststudio.s3-us-west-1.amazonaws.com/podcasts/{filename}", format="mp3")
+    podcast_result = Audio(name=f"{pod.name}-{ad.name}", s3_path=f"https://podcaststudio.s3-us-west-1.amazonaws.com/raw_podcasts/{pod.name}-{ad.name}", audio_code='edt', user=user)
 
-    # podcast_result = Audio(name=f"{pod.name}-{ad.name}", s3_path=f"https://podcaststudio.s3-us-west-1.amazonaws.com/raw_podcasts/{pod.name}-{ad.name}", audio_code='edt', user=user)
-
-    # db.session.add(podcast_result)
-    # db.session.commit()
+    db.session.add(podcast_result)
+    db.session.commit()
 
     
     return redirect("/my-podcasts")
@@ -229,18 +239,22 @@ def delete_audio(audio_id):
         audio = Audio.query.filter_by(audio_id=audio_id).one()
 
         if audio.audio_code == "ad":    
-            file_to_remove = f"https://podcaststudio.s3-us-west-1.amazonaws.com/ads/{audio.name}"
+            # file_to_remove = f"https://podcaststudio.s3-us-west-1.amazonaws.com/ads/{audio.name}"
+            
             db.session.delete(audio)
             db.session.commit()
-            os.remove(audio.s3_path)
+            # os.remove(audio.s3_path)
+            s3.Object("podcaststudio", audio.name).delete()
+            
             return redirect("/my-ads")
 
 
         elif audio.audio_code == "pod":
-            file_to_remove = f"https://podcaststudio.s3-us-west-1.amazonaws.com/raw_podcasts/{audio.name}"
+            # file_to_remove = f"https://podcaststudio.s3-us-west-1.amazonaws.com/raw_podcasts/{audio.name}"
+            s3_client.delete_object(Bucket="podcaststudio", Key=audio.s3_path)
             db.session.delete(audio)
             db.session.commit()
-            os.remove(audio.s3_path)
+            # os.remove(audio.s3_path)
             return redirect("/my-raw-podcasts")
 
         elif audio.audio_code == "edt":
@@ -248,7 +262,7 @@ def delete_audio(audio_id):
             file_to_remove = f"https://podcaststudio.s3-us-west-1.amazonaws.com/podcasts/{audio.name}"
             db.session.delete(audio)
             db.session.commit()
-            os.remove(audio.s3_path)
+            # os.remove(audio.s3_path)
             return redirect("/my-podcasts")
 
 

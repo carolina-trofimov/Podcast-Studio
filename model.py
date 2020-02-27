@@ -47,6 +47,7 @@ class Audio(db.Model):
     name = db.Column(db.String(50), nullable=False,)
 
     s3_path = db.Column(db.String(300), nullable=False,)
+    #s3_key (folder/filename)
 
     published = db.Column(db.Boolean, default=False, nullable=False)
 

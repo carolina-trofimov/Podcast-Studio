@@ -1,4 +1,6 @@
 import boto3
+import boto
+from boto.s3.connection import S3Connection, Bucket, Key
 import logging
 from botocore.exceptions import ClientError
 from jinja2 import StrictUndefined
@@ -10,6 +12,7 @@ from werkzeug.utils import secure_filename
 import os
 import io
 from pydub import AudioSegment
+from aws_keys import aws_access_key_id, aws_secret_access_key
 
 # use Amazon S3
 s3 = boto3.resource('s3')
@@ -243,8 +246,14 @@ def delete_audio(audio_id):
             
             db.session.delete(audio)
             db.session.commit()
-            # os.remove(audio.s3_path)
-            s3.Object("podcaststudio", audio.name).delete()
+
+            #def a delete_from_s3 function
+            conn = S3Connection(aws_access_key_id, aws_secret_access_key)
+            bucket = Bucket(conn, "podcaststudio")
+            k = Key(bucket)
+            k.key = f"ads/{audio.name}"
+            bucket.delete_key(k)
+
             
             return redirect("/my-ads")
 
@@ -254,15 +263,26 @@ def delete_audio(audio_id):
             s3_client.delete_object(Bucket="podcaststudio", Key=audio.s3_path)
             db.session.delete(audio)
             db.session.commit()
-            # os.remove(audio.s3_path)
+
+            conn = S3Connection(aws_access_key_id, aws_secret_access_key)
+            bucket = Bucket(conn, "podcaststudio")
+            k = Key(bucket)
+            k.key = f"raw_podcasts/{audio.name}"
+            bucket.delete_key(k)
             return redirect("/my-raw-podcasts")
 
         elif audio.audio_code == "edt":
             UPLOAD_FOLDER = "static/podcasts/"
-            file_to_remove = f"https://podcaststudio.s3-us-west-1.amazonaws.com/podcasts/{audio.name}"
+
             db.session.delete(audio)
             db.session.commit()
-            # os.remove(audio.s3_path)
+
+            conn = S3Connection(aws_access_key_id, aws_secret_access_key)
+            bucket = Bucket(conn, "podcaststudio")
+            k = Key(bucket)
+            k.key = f"podcasts/{audio.name}"
+            bucket.delete_key(k)
+
             return redirect("/my-podcasts")
 
 

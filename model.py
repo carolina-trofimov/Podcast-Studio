@@ -1,11 +1,12 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
 
  
 
 class AudioType(db.Model):
-    """Data model for a human."""
+    """Data model for an audio_code."""
 
     __tablename__ = "audio_types"
 
@@ -21,14 +22,14 @@ class AudioType(db.Model):
 
 
 class User(db.Model):
-    """Data model for a human."""
+    """Data model for an audio."""
 
     __tablename__ = "users"
 
     # Define your columns and/or relationships here
     user_id = db.Column(db.Integer, nullable=False, primary_key=True, autoincrement=True,)
     uname = db.Column(db.String(30), nullable=False, unique=True,)
-    email = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True,)
     # password = db.Column(db.String(64), nullable=True) ADD this column???
 
     def __repr__(self):
@@ -37,7 +38,7 @@ class User(db.Model):
         return f"<uname={self.uname} email{self.email}>"
 
 class Audio(db.Model):
-    """Data model for a human."""
+    """Data model for an audio."""
 
     __tablename__ = "audios"
 
@@ -47,9 +48,10 @@ class Audio(db.Model):
     name = db.Column(db.String(50), nullable=False,)
 
     s3_path = db.Column(db.String(300), nullable=False,)
-    #s3_key (folder/filename)
+    
+    s3_key = db.Column(db.String(300), nullable=False,)
 
-    published = db.Column(db.Boolean, default=False, nullable=False)
+    published = db.Column(db.Boolean, default=False, nullable=False,)
 
     audio_code = db.Column(db.String(10),
                          db.ForeignKey('audio_types.audio_code'),
@@ -70,6 +72,33 @@ class Audio(db.Model):
         return f"<audio_id={self.audio_id} name={self.name} audio_code={self.audio_code}>"
 
 
+class Follow(db.Model):
+    """Data model for a channel"""
+
+    __tablename__ = "followers"
+
+    follow_id = db.Column(db.Integer, nullable=False, primary_key=True, autoincrement=True,)
+    
+    follower_id = db.Column(db.Integer,
+                     db.ForeignKey('users.user_id'),
+                     nullable=False,
+                     )
+
+    followed_id = db.Column(db.Integer,
+                     db.ForeignKey('users.user_id'),
+                     nullable=False,
+                     )
+
+    follower = db.relationship("User", foreign_keys=[follower_id], backref="following")
+    followed = db.relationship("User", foreign_keys=[followed_id], backref="followed_by")
+
+    # follower = relationship("User", foreign_keys="[User.follower_id]")
+    # followed = relationship("User", foreign_keys="[User.followed_id]")
+
+    def __repr__(self):
+        """Return a human-readable representation of a channel."""
+
+        return f"<follower_id={self.follower_id} followed_id={self.followed_id}>"
 
 
 def connect_to_db(app):

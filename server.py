@@ -20,11 +20,9 @@ s3_client = s3.meta.client
 bucket = s3.Bucket('podcaststudio')
 
 
-# UPLOAD_FOLDER = 
 ALLOWED_EXTENSIONS = {"mp3"}
 
 app = Flask(__name__)
-# app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Required to use Flask sessions and the debug toolbar
 app.secret_key = "ABC"

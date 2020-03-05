@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<p> Welcome to {{to_follow.uname}} profile!</p>
+
+<ul>
+  {% for audio in audios %}
+  <li>
+    {{audio.name}}
+    <audio controls id="audio">
+        <source src="{{audio.s3_path}}">
+      </audio>
+      <form enctype= "form-data" action="/user/{{user.user_id}}"></form>
+  </li>
+{% endfor %}
+</ul>
+
+
+
+{% endblock content %}

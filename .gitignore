@@ -4,3 +4,4 @@ __pycache__
 *.DS_Store
 *.aws
 *aws_keys.py
+*PodcastStudio-c8a941ca3ba3.json

@@ -47,9 +47,10 @@ def register_user():
     """Register a new user."""
     new_email = request.form.get("email")
     new_password = request.form.get("password")
+    uname = request.form.get("uname")
 
     if User.query.filter_by(email=new_email).first() is None:
-        user = User(email=new_email, uname=new_email) #, password=new_password)
+        user = User(email=new_email, uname=uname) #, password=new_password)
         db.session.add(user)
         db.session.commit()
         flash("New user created.") 
@@ -68,16 +69,17 @@ def show_login_form():
 def login():
     """Login user."""
     email = request.form.get("email")
-    password = request.form.get("password")
+    # password = request.form.get("password")
+    username = request.form.get("username")
 
     user = User.query.filter_by(email=email).first()
 
-    if password == password:
+    if username == username:
         session["logged_in_user"] = user.user_id
         return redirect("/upload")
     else:
         flash("Incorrect email or password.")
-        return redirect("/login")
+        return redirect("/upload")
 
 
 def allowed_file(filename):
@@ -139,11 +141,13 @@ def save_audio_to_db(filename, audio_type):
 
     if audio_type == "pod":
         s3_path = f"https://podcaststudio.s3-us-west-1.amazonaws.com/raw_podcasts/{filename}"
-    else:
+    elif audio_type == "ad":
         s3_path = f"https://podcaststudio.s3-us-west-1.amazonaws.com/ads/{filename}"
-
+    else:
+        s3_path = f"https://podcaststudio.s3-us-west-1.amazonaws.com/podcasts/{filename}"
     audio_type = AudioType.query.get(audio_type)
     user = User.query.get(session["logged_in_user"])
+    print("audio type before query", audio_type)
     audio = Audio(user=user, audio_type=audio_type, name=filename, s3_path=s3_path)
     db.session.add(audio)
     db.session.commit()
@@ -210,13 +214,13 @@ def concatenate_audios():
     edited_pod.export(file3, format="mp3")
     file3.seek(0)
     
-    save_file_to_s3(f"{pod.name}-{ad.name}", "edt", file3)
-    save_audio_to_db(f"{pod.name}-{ad.name}", "edt")
+    save_file_to_s3(f"{pod.name}-{ad.name}", "edit", file3)
+    save_audio_to_db(f"{pod.name}-{ad.name}", "edit")
 
-    podcast_result = Audio(name=f"{pod.name}-{ad.name}", s3_path=f"https://podcaststudio.s3-us-west-1.amazonaws.com/raw_podcasts/{pod.name}-{ad.name}", audio_code='edt', user=user)
+    # podcast_result = Audio(name=f"{pod.name}-{ad.name}", s3_path=f"https://podcaststudio.s3-us-west-1.amazonaws.com/podcasts/{pod.name}-{ad.name}", audio_code='edit', user=user)
 
-    db.session.add(podcast_result)
-    db.session.commit()
+    # db.session.add(podcast_result)
+    # db.session.commit()
 
     
     return redirect("/my-podcasts")
@@ -224,10 +228,59 @@ def concatenate_audios():
 @app.route("/my-podcasts")
 def my_podcasts():
     user = User.query.get(session["logged_in_user"])
-    edt_pod = Audio.query.filter_by(user_id=user.user_id, audio_code='edt')
-    # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", edt_pod)
+    edit_pod = Audio.query.filter_by(user_id=user.user_id, audio_code='edit')
+    # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", edit_pod)
 
-    return render_template("my_podcasts.html", audios=edt_pod)
+    return render_template("my_podcasts.html", audios=edit_pod)
+
+
+
+@app.route("/users", methods=["POST", "GET"])
+def all_users():
+    """Show list of users"""
+
+    user = User.query.get(session["logged_in_user"])
+
+    users = user.query.filter(User.uname != user.uname).all()
+
+    return render_template("users.html", users=users)
+
+
+@app.route("/handle-follow", methods=["POST"])
+def handle_follow():
+    
+    user = User.query.get(session["logged_in_user"])
+
+    followed_id = request.form.get("followed")
+
+
+    followed = User.query.get(followed_id)
+
+    user.following.append(followed)
+
+
+    # follow = Follow(follower_id=user.user_id, followed_id=followed)
+    # print("\n\n\n\n\n\nfollow:", follow, "\n\n\n\n\n\n\n\n")
+
+    db.session.commit()
+    
+
+    return redirect("/users")
+
+
+@app.route("/user/<int:user_id>", methods=["GET", "POST"])
+def profile(user_id):
+    """Shows user profile with edited podcasts"""                                   
+    
+    user = User.query.get(session["logged_in_user"])
+
+    to_follow = User.query.get(user_id)
+
+    audio = Audio.query.filter_by(user_id=user.user_id, audio_code="edit")
+
+    return render_template("profile.html", audios=audio, user=user, to_follow=to_follow) 
+
+
 
 @app.route("/delete-audio/<int:audio_id>", methods=["GET", "POST"])
 def delete_audio(audio_id):
@@ -269,7 +322,7 @@ def delete_audio(audio_id):
             bucket.delete_key(k)
             return redirect("/my-raw-podcasts")
 
-        elif audio.audio_code == "edt":
+        elif audio.audio_code == "edit":
             UPLOAD_FOLDER = "static/podcasts/"
 
             db.session.delete(audio)

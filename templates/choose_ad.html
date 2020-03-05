@@ -5,11 +5,12 @@
 <ul>
   <form enctype='form-data' action='/concatenate-audios' method='post'>
     <input type="hidden" name="raw_pod_id" value="{{ request.args.get('raw_pod_id') }}">
+    
     {% for audio in audios %}
         {% if audio.audio_code == "ad" %}
     
     <li>
-    <input type="radio" value="{{ audio.audio_id  }}" name="ad_id">
+    <input type="radio" value="{{ audio.audio_id }}" name="ad_id">
       <label for="ad">{{ audio.name }}</label> 
       <audio controls id="audio">
         <source src="{{audio.s3_path}}">

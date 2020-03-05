@@ -31,6 +31,13 @@ class User(db.Model):
     uname = db.Column(db.String(30), nullable=False, unique=True,)
     email = db.Column(db.String(100), nullable=False, unique=True,)
     # password = db.Column(db.String(64), nullable=True) ADD this column???
+    following = db.relationship(
+        'User',
+        secondary='followers',
+        primaryjoin='User.user_id==Follow.follower_id',
+        secondaryjoin='User.user_id==Follow.followed_id',
+        backref='followers'
+    )
 
     def __repr__(self):
         """Return a human-readable representation of an Audio."""
@@ -49,7 +56,7 @@ class Audio(db.Model):
 
     s3_path = db.Column(db.String(300), nullable=False,)
     
-    s3_key = db.Column(db.String(300), nullable=False,)
+    # s3_key = db.Column(db.String(300), nullable=False,)
 
     published = db.Column(db.Boolean, default=False, nullable=False,)
 
@@ -76,6 +83,9 @@ class Follow(db.Model):
     """Data model for a channel"""
 
     __tablename__ = "followers"
+    __table_args__ = (
+        db.UniqueConstraint('follower_id', 'followed_id'),
+    )
 
     follow_id = db.Column(db.Integer, nullable=False, primary_key=True, autoincrement=True,)
     
@@ -89,8 +99,8 @@ class Follow(db.Model):
                      nullable=False,
                      )
 
-    follower = db.relationship("User", foreign_keys=[follower_id], backref="following")
-    followed = db.relationship("User", foreign_keys=[followed_id], backref="followed_by")
+    # follower = db.relationship("User", foreign_keys=[follower_id], backref="following")
+    # followed = db.relationship("User", foreign_keys=[followed_id], backref="followed_by")
 
     # follower = relationship("User", foreign_keys="[User.follower_id]")
     # followed = relationship("User", foreign_keys="[User.followed_id]")
@@ -104,12 +114,20 @@ class Follow(db.Model):
 def connect_to_db(app):
     """Connect the database to our Flask app."""
 
-    # Configure to use our database.
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgres:///podcasts"
     app.config["SQLALCHEMY_ECHO"] = False
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app
     db.init_app(app)
+    
+
+
+def seed_db():
+    db.session.add(AudioType(audio_code="pod"))
+    db.session.add(AudioType(audio_code="ad"))
+    db.session.add(AudioType(audio_code="edit"))
+    db.session.commit()
+
 
 
 if __name__ == "__main__":
@@ -118,3 +136,5 @@ if __name__ == "__main__":
 
     from server import app
     connect_to_db(app)
+    db.create_all()
+    seed_db()

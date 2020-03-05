@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+
+
+<h3>Find Friends</h3>
+
+<ul>
+    {% for user in users %}
+    <li>
+    
+      <a href="/user/{{user.user_id}}">{{ user.uname }}</a>
+
+      <form enctype="form-data" action="/handle-follow" method="POST">
+        <input type="hidden" name="followed" value="{{user.user_id}}">
+        <!-- each user has to be a link that directs to user profile -->
+        <button class="follow-btn" id="{{user.user_id}}">Follow</button>
+      </form>
+    </li>
+{% endfor %}
+</ul>
+
+<script src="/static/follow.js"></script>
+
+{% endblock %}

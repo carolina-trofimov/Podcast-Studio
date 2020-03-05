@@ -154,7 +154,16 @@ def save_audio_to_db(filename, audio_type):
 
     return audio.audio_code
 
-                
+
+@app.route("/audio/<int:audio_id>", methods=["POST"])
+def edit_audio_name(audio_id):
+    
+    new_name = request.form.get("name")
+    audio = db.session.query(Audio).get(audio_id)
+    audio.name = new_name
+    db.session.commit()
+
+    return "200"
 
 @app.route("/my-raw-podcasts")
 def my_raw_podcasts():

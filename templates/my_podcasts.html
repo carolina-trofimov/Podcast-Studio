@@ -19,13 +19,8 @@
 
       <form class="publish-form" enctype="form-data" action="/publish/{{ edt_podcast.audio_id}}" method="POST" id="{{ edt_podcast.audio_id }}">
         <input type="hidden" name="publish" value="{{ edt_podcast.published }}">
-        <button class="publish-btn" id="submit-{{ edt_podcast.audio_id }}">
-          {% if edt_podcast.published == False %}
-            Publish
-          {% else %}
-            Published
-          {% endif %}
-      </button>
+        
+        <button class="publish-btn" id="{{ edt_podcast.audio_id }}">{% if not edt_podcast.published %}Published{% else %}Publish{% endif %}</button>
       </form>
 
       <form enctype="form-data" action="/delete-audio/{{ edt_podcast.audio_id }}" method="POST">

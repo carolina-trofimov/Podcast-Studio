@@ -4,7 +4,7 @@ from boto.s3.connection import S3Connection, Bucket, Key
 import logging
 from botocore.exceptions import ClientError
 from jinja2 import StrictUndefined
-from flask import (Flask, render_template, redirect, request, flash, session, url_for)
+from flask import (Flask, render_template, redirect, request, flash, session, url_for, jsonify)
 from flask_debugtoolbar import DebugToolbarExtension
 from model import connect_to_db, db, AudioType, User, Audio
 from flask_uploads import UploadSet, configure_uploads, AUDIO
@@ -13,6 +13,7 @@ import os
 import io
 from pydub import AudioSegment
 from aws_keys import aws_access_key_id, aws_secret_access_key
+
 
 # use Amazon S3
 s3 = boto3.resource('s3')
@@ -242,22 +243,40 @@ def my_podcasts():
     return render_template("my_podcasts.html", audios=edit_pod)
 
 
-@app.route("/publish/<int:audio_id>", methods=["POST", "GET"])
-def publish(audio_id):
+@app.route("/publish", methods=["POST", "GET"])
+def publish():
 
-    podcast = Audio.query.get(audio_id)
+    # podcast = Audio.query.get(audio_id)
 
-    not_published = podcast.published
+    # not_published = podcast.published
 
-    published = bool(request.form.get("publish"))
+    # published = bool(request.form.get("publish"))
 
-    if published:
-        audio = db.session.query(Audio).get(audio_id)
-        audio.published = published
+    # if published:
+    #     audio = db.session.query(Audio).get(audio_id)
+    #     audio.published = published
+    #     db.session.commit()
+
+    # return "success"
+
+    user = User.query.get(session["logged_in_user"])
+    audio_id = request.form.get("publish")
+    audio = Audio.query.get(audio_id)
+    
+    print("\n\n\n\n\n\n\n" ,request.form.get("action"))
+
+    if request.form.get("action") == "publish":      
+      
+        audio.published = False
         db.session.commit()
 
+        return jsonify({"status": "publish"})
 
-    return "success"
+    else: 
+        audio.published = True
+        db.session.commit()
+
+        return jsonify({"status": "published"})
 
 
 @app.route("/users", methods=["POST", "GET"])
@@ -268,25 +287,29 @@ def all_users():
 
     users = user.query.filter(User.uname != user.uname).all()
 
-    return render_template("users.html", users=users, logedin_user=user)
+    return render_template("users.html", users=users, loggedin_user=user)
 
 
 @app.route("/handle-follow", methods=["POST"])
 def handle_follow():
     
     user = User.query.get(session["logged_in_user"])
-
     followed_id = request.form.get("followed")
-
-
     followed = User.query.get(followed_id)
+    print("\n\n\n\n\n\n\n" ,request.form.get("action"))
 
-    user.following.append(followed)
+    if request.form.get("action") == "follow":      
+        if followed not in user.following:
+            user.following.append(followed)
+            db.session.commit()
 
-    db.session.commit()
-    
+        return jsonify({"status": "following"})
 
-    return redirect("/users")
+    else: 
+        user.following.remove(followed)
+        db.session.commit()
+
+        return jsonify({"status": "unfollowing"})
 
 
 @app.route("/user/<int:user_id>", methods=["GET", "POST"])

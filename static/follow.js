@@ -8,18 +8,27 @@ const btns = $('.follow-btn');
       const userId = $(evt.target).attr("id");
 
       const text = $(evt.target).html();
-      $.post("/handle-follow", { followed: userId}, (res) =>{
+      
+      let action = "follow";
+      console.log(text);
+      if(text === "Following") {
+        console.log("it was following")
+        action = "unfollow";
+      }
+      else{
+        console.log("it wasn't following");
+      }
+
+      $.post("/handle-follow", {followed: userId, action: action}, (res) =>{
         console.log(res);
 
-        if (text === "Follow") {    
-         
+        if (res.status === "following") {    
+
           $(evt.target).html("Following"); 
         }
-
-        if (text === "Following") {
+        if (res.status === "unfollowing") {
           $(evt.target).html("Follow");
         }
-      });
-      
+      });      
     });
 

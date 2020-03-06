@@ -6,20 +6,30 @@
 <h3>My Podcasts</h3>
 
 <ul id='podcast-list'>
-    {% for edt_pod in audios %}
+    {% for edt_podcast in audios %}
     <li>
-    
-      <div class= "podcast-name" data-pod-id={{edt_pod.audio_id}}>{{ edt_pod.name }}</div> 
+      <div class= "podcast-name" data-pod-id="{{ edt_podcast.audio_id }}">{{ edt_podcast.name }}</div> 
       <audio controls id="audio">
-        <source src="{{edt_pod.s3_path}}">
+        <source src="{{ edt_podcast.s3_path }}">
       </audio>
       <form enctype= "form-data" action="/my-podcasts">
 
-        <input type="hidden" name="edt_id" value="{{edt_pod.audio_id}}">
+        <input type="hidden" name="edt_id" value="{{ edt_podcast.audio_id}}">
       </form>
 
-      <form enctype="form-data" action="/delete-audio/{{edt_pod.audio_id}}" method="POST">
-        <input type="hidden" name="delete-audio" value="{{edt_pod.audio_id}}">
+      <form class="publish-form" enctype="form-data" action="/publish/{{ edt_podcast.audio_id}}" method="POST" id="{{ edt_podcast.audio_id }}">
+        <input type="hidden" name="publish" value="{{ edt_podcast.published }}">
+        <button class="publish-btn" id="submit-{{ edt_podcast.audio_id }}">
+          {% if edt_podcast.published == False %}
+            Publish
+          {% else %}
+            Published
+          {% endif %}
+      </button>
+      </form>
+
+      <form enctype="form-data" action="/delete-audio/{{ edt_podcast.audio_id }}" method="POST">
+        <input type="hidden" name="delete-audio" value="{{ edt_podcast.audio_id }}">
         <button href="/delete-audio">delete</button>
       </form>
     </li>
@@ -28,7 +38,7 @@
 
 
 <script src="/static/edit_podcasts.js"></script>
-
+<script src="/static/publish_podcast.js"></script>
 
 
 {% endblock %}

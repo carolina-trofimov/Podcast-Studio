@@ -50,11 +50,11 @@ def register_user():
     uname = request.form.get("uname")
 
     if User.query.filter_by(email=new_email).first() is None:
-        user = User(email=new_email, uname=uname) #, password=new_password)
+        user = User(uname=uname, email=new_email)
         db.session.add(user)
         db.session.commit()
         flash("New user created.") 
-        return redirect("/")
+        return redirect("/upload")
     else:
         flash("This user already exists.")
         return redirect("/login")
@@ -238,10 +238,26 @@ def concatenate_audios():
 def my_podcasts():
     user = User.query.get(session["logged_in_user"])
     edit_pod = Audio.query.filter_by(user_id=user.user_id, audio_code='edit')
-    # print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", edit_pod)
 
     return render_template("my_podcasts.html", audios=edit_pod)
 
+
+@app.route("/publish/<int:audio_id>", methods=["POST", "GET"])
+def publish(audio_id):
+
+    podcast = Audio.query.get(audio_id)
+
+    not_published = podcast.published
+
+    published = bool(request.form.get("publish"))
+
+    if published:
+        audio = db.session.query(Audio).get(audio_id)
+        audio.published = published
+        db.session.commit()
+
+
+    return "success"
 
 
 @app.route("/users", methods=["POST", "GET"])
@@ -252,7 +268,7 @@ def all_users():
 
     users = user.query.filter(User.uname != user.uname).all()
 
-    return render_template("users.html", users=users)
+    return render_template("users.html", users=users, logedin_user=user)
 
 
 @app.route("/handle-follow", methods=["POST"])
@@ -266,10 +282,6 @@ def handle_follow():
     followed = User.query.get(followed_id)
 
     user.following.append(followed)
-
-
-    # follow = Follow(follower_id=user.user_id, followed_id=followed)
-    # print("\n\n\n\n\n\nfollow:", follow, "\n\n\n\n\n\n\n\n")
 
     db.session.commit()
     
@@ -285,7 +297,7 @@ def profile(user_id):
 
     to_follow = User.query.get(user_id)
 
-    audio = Audio.query.filter_by(user_id=user.user_id, audio_code="edit")
+    audio = Audio.query.filter_by(user_id=to_follow.user_id, audio_code="edit")
 
     return render_template("profile.html", audios=audio, user=user, to_follow=to_follow) 
 
@@ -294,11 +306,9 @@ def profile(user_id):
 @app.route("/delete-audio/<int:audio_id>", methods=["GET", "POST"])
 def delete_audio(audio_id):
     """Allow user to delete an audio"""
-
     
     user = User.query.get(session["logged_in_user"])
     if user:
-        new_id = audio_id
         audio = Audio.query.filter_by(audio_id=audio_id).one()
 
         if audio.audio_code == "ad":    

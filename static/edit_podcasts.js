@@ -7,12 +7,13 @@ $(".podcast-name").on("dblclick", function(evt) {
 });
 
 $('#podcast-list').on('keypress', function(evt) {
-    console.log("we are inside the keydown", evt.keyCode)
+    // console.log("we are inside the keydown", evt.keyCode)
     if (evt.keyCode === 13) {
         const target = $(evt.target);
         const data = target.data();
         const newName = target.val();
         const podId = data.podId;
+        // console.log(podId)
         $.ajax({
           type: "POST",
           url: `/audio/${podId}`,
@@ -22,7 +23,6 @@ $('#podcast-list').on('keypress', function(evt) {
             target.parent().html(newName)
           }
         });
-        
         
     }
 })

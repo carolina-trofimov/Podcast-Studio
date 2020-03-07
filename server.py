@@ -13,7 +13,7 @@ import os
 import io
 from pydub import AudioSegment
 from aws_keys import aws_access_key_id, aws_secret_access_key
-
+from sqlalchemy import update
 
 # use Amazon S3
 s3 = boto3.resource('s3')
@@ -238,26 +238,16 @@ def concatenate_audios():
 @app.route("/my-podcasts")
 def my_podcasts():
     user = User.query.get(session["logged_in_user"])
-    edit_pod = Audio.query.filter_by(user_id=user.user_id, audio_code='edit')
+    all_edited_podcasts = Audio.query.filter_by(user_id=user.user_id, audio_code='edit').all()
+    print([(pod.published, pod.name) for pod in all_edited_podcasts])
+    print(f"this is edit_pod >>>>>>>>>>>>{all_edited_podcasts}")
 
-    return render_template("my_podcasts.html", audios=edit_pod)
+    return render_template("my_podcasts.html", audios=all_edited_podcasts)
 
 
-@app.route("/publish", methods=["POST", "GET"])
+@app.route("/publish", methods=["POST"])
 def publish():
 
-    # podcast = Audio.query.get(audio_id)
-
-    # not_published = podcast.published
-
-    # published = bool(request.form.get("publish"))
-
-    # if published:
-    #     audio = db.session.query(Audio).get(audio_id)
-    #     audio.published = published
-    #     db.session.commit()
-
-    # return "success"
 
     user = User.query.get(session["logged_in_user"])
     audio_id = request.form.get("publish")
@@ -266,17 +256,19 @@ def publish():
     print("\n\n\n\n\n\n\n" ,request.form.get("action"))
 
     if request.form.get("action") == "publish":      
-      
-        audio.published = False
-        db.session.commit()
-
-        return jsonify({"status": "publish"})
-
-    else: 
+        print("publishing: ", audio.name)
         audio.published = True
+        db.session.add(audio)
         db.session.commit()
 
         return jsonify({"status": "published"})
+
+    else: 
+        audio.published = False
+        db.session.add(audio)
+        db.session.commit()
+
+        return jsonify({"status": "unpublished"})
 
 
 @app.route("/users", methods=["POST", "GET"])

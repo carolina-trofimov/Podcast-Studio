@@ -5,16 +5,14 @@
 <a href="/upload">upload</a> <br>
 
 <h3>My raw-podcasts</h3>
-
-
 <ul>
     {% for audio in audios %}
-    <li>
-    
+    <li> 
       {{ audio.name }} 
       <audio controls id="audio">
         <source src="{{audio.s3_path}}">
       </audio>
+      
       <form enctype= "form-data" action="/choose-ad">
         <button sclass="edit" type="submit">edit</button>
         <input type="hidden" name="raw_pod_id" value="{{audio.audio_id}}">

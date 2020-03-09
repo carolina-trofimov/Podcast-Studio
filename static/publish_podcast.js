@@ -2,16 +2,14 @@
 const btns = $('.publish-btn');
     btns.on('click', (evt) => {
       evt.preventDefault();
-
       const audioId = $(evt.target).attr("id");
-
       const text = $(evt.target).html();
-      
       let action;
 
       if(text === "Unpublish") {
         action = "unpublish";
       }
+
       else{
        action = "publish";
       }
@@ -22,6 +20,7 @@ const btns = $('.publish-btn');
         if (res.status === "published") {    
           $(evt.target).html("Unpublish"); 
         }
+        
         if (res.status === "unpublished") {
           $(evt.target).html("Publish");
         }

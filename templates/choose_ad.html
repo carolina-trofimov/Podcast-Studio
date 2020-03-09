@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
 
-
 <ul>
   <form enctype='form-data' action='/concatenate-audios' method='post'>
     <input type="hidden" name="raw_pod_id" value="{{ request.args.get('raw_pod_id') }}">
@@ -16,9 +15,9 @@
         <source src="{{audio.s3_path}}">
       </audio> 
     </li>
-   
     {% endif %}
 {% endfor %}
+
   <input type="submit">
   </form>
 </ul>

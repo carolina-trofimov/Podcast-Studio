@@ -1,15 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
 
-
 <form enctype="form-data" action="/handle-follow" method="POST">
     <input type="hidden" name="follow" value="{{user.user_id}}">
     <button href="/">follow</button>
 </form>
-
-
-
-
-
 
 {% endblock %}

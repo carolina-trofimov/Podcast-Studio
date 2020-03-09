@@ -1,20 +1,15 @@
 {% extends 'base.html' %}
 {% block content %}
 
-
-
+<a href="/upload">upload</a> <br>
 
 <h3>Find Friends</h3>
-
 <ul>
     {% for user in users %}
     <li>
-    
       <a href="/user/{{user.user_id}}">{{ user.uname }}</a>
-
       <form enctype="form-data" action="/handle-follow" method="POST">
         <input type="hidden" name="followed" value="{{user.user_id}}">
-
         <button class="follow-btn" id="{{ user.user_id }}">{% if user in loggedin_user.following %}Following{% else %}Follow{% endif %}</button>
       </form>
     </li>

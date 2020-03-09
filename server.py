@@ -1,33 +1,21 @@
-import boto3
-import boto
-from boto.s3.connection import S3Connection, Bucket, Key
-import logging
 from botocore.exceptions import ClientError
-from jinja2 import StrictUndefined
+from constants import s3, s3_client, bucket
 from flask import (Flask, render_template, redirect, request, flash, session, url_for, jsonify)
 from flask_debugtoolbar import DebugToolbarExtension
-from model import connect_to_db, db, AudioType, User, Audio
 from flask_uploads import UploadSet, configure_uploads, AUDIO
-from werkzeug.utils import secure_filename
-import os
+from helpers import allowed_file, delete_from_s3, delete_from_db, save_file_to_s3, save_audio_to_db
 import io
+from jinja2 import StrictUndefined
+import logging
+from model import connect_to_db, db, AudioType, User, Audio
+import os
 from pydub import AudioSegment
-from aws_keys import aws_access_key_id, aws_secret_access_key
 from sqlalchemy import update
+from werkzeug.utils import secure_filename
 
-# use Amazon S3
-s3 = boto3.resource('s3')
-s3_client = s3.meta.client
-bucket = s3.Bucket('podcaststudio')
-
-
-ALLOWED_EXTENSIONS = {"mp3"}
 
 app = Flask(__name__)
-
-# Required to use Flask sessions and the debug toolbar
 app.secret_key = "ABC"
-
 app.jinja_env.undefined = StrictUndefined
 
 
@@ -60,6 +48,7 @@ def register_user():
         flash("This user already exists.")
         return redirect("/login")
 
+
 @app.route("/login")
 def show_login_form():
     """Show login form."""
@@ -70,9 +59,7 @@ def show_login_form():
 def login():
     """Login user."""
     email = request.form.get("email")
-    # password = request.form.get("password")
     username = request.form.get("username")
-
     user = User.query.filter_by(email=email).first()
 
     if username == username:
@@ -83,12 +70,6 @@ def login():
         return redirect("/upload")
 
 
-def allowed_file(filename):
-    """Check if file is in the correct extension mp3."""
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
 @app.route("/upload")
 def upload():
     """Show upload form."""
@@ -97,7 +78,7 @@ def upload():
 
 @app.route("/process-upload", methods=["POST"])
 def process_upload():
-    """Save uploaded file and add it to database."""
+    """Upload file to S3 and add it to database."""
     if 'file' not in request.files:
         flash("No file found")
         return redirect('/upload')
@@ -121,39 +102,6 @@ def process_upload():
             return redirect("/my-raw-podcasts")
         else:
             return redirect("/my-ads")
-   
-   #refactor functions below into helper     
-def save_file_to_s3(filename, audio_type, file):
-
-    if audio_type == "pod":
-        s3_path = f"raw_podcasts/{filename}"
-    elif audio_type == "ad":
-        s3_path = f"ads/{filename}"
-    else:
-        s3_path = f"podcasts/{filename}"
-    
-    s3_client.put_object(Body=file,
-                      Bucket="podcaststudio",
-                      Key=s3_path,
-                      ContentType="mp3",
-                      ACL="public-read")
-
-def save_audio_to_db(filename, audio_type):
-
-    if audio_type == "pod":
-        s3_path = f"https://podcaststudio.s3-us-west-1.amazonaws.com/raw_podcasts/{filename}"
-    elif audio_type == "ad":
-        s3_path = f"https://podcaststudio.s3-us-west-1.amazonaws.com/ads/{filename}"
-    else:
-        s3_path = f"https://podcaststudio.s3-us-west-1.amazonaws.com/podcasts/{filename}"
-    audio_type = AudioType.query.get(audio_type)
-    user = User.query.get(session["logged_in_user"])
-    print("audio type before query", audio_type)
-    audio = Audio(user=user, audio_type=audio_type, name=filename, s3_path=s3_path)
-    db.session.add(audio)
-    db.session.commit()
-
-    return audio.audio_code
 
 
 @app.route("/audio/<int:audio_id>", methods=["POST"])
@@ -163,8 +111,8 @@ def edit_audio_name(audio_id):
     audio = db.session.query(Audio).get(audio_id)
     audio.name = new_name
     db.session.commit()
-
     return "200"
+
 
 @app.route("/my-raw-podcasts")
 def my_raw_podcasts():
@@ -173,8 +121,7 @@ def my_raw_podcasts():
     audio = Audio.query.filter_by(user_id=user.user_id, audio_code="pod")
     return render_template("my_raw_podcasts.html", audios=audio)
 
-
-            
+          
 @app.route("/my-ads")
 def my_ads():
     """Show ads list."""
@@ -187,11 +134,9 @@ def my_ads():
 def choose_ad():
     """Allow user to choose and ad"""
     user = User.query.get(session["logged_in_user"]) #user_id
-    
     audios = user.audios
-
-    
     return render_template("choose_ad.html", audios=audios)
+
 
 @app.route("/concatenate-audios", methods=["GET", "POST"])
 def concatenate_audios():
@@ -201,23 +146,24 @@ def concatenate_audios():
     #instantiate audio object as pod to access podcast name to concatenate
     pod_id = request.form.get("raw_pod_id")
     pod = Audio.query.get(pod_id)
-    # print("\n\n\n\n\n\n\n\n\n\n", pod.name)
+
+    # Download s3 audio object 
     file1 = io.BytesIO()
     s3.Object("podcaststudio", f"raw_podcasts/{pod.name}").download_fileobj(file1)
+    #reset seeking
     file1.seek(0) 
+    #convert audio into audiosegment object
     audio1 = AudioSegment.from_file(file1, format="mp3")
-    #instantiate audio object as ad to access ad name to concatenate
-    # print("\n\n\n\n\nthis is audio1 >>>>>>>>>>>>>", audio1, "\n\n\n\n\n\n\n")
+    
     ad_id = request.form.get("ad_id")
     ad = Audio.query.get(ad_id)
 
-    # print("\n\n\n\n\n\n\n\n", ad.s3_path)
     file2 = io.BytesIO()
     s3.Object("podcaststudio", f"ads/{ad.name}").download_fileobj(file2)
     file2.seek(0)
     audio2 = AudioSegment.from_file(file2, format="mp3")
 
-    # edited_pod = audio2 + audio1
+    # append ad into podcast
     edited_pod = audio2.append(audio1, crossfade=2000)
     
     file3 = io.BytesIO()
@@ -227,58 +173,45 @@ def concatenate_audios():
     save_file_to_s3(f"{pod.name}-{ad.name}", "edit", file3)
     save_audio_to_db(f"{pod.name}-{ad.name}", "edit")
 
-    # podcast_result = Audio(name=f"{pod.name}-{ad.name}", s3_path=f"https://podcaststudio.s3-us-west-1.amazonaws.com/podcasts/{pod.name}-{ad.name}", audio_code='edit', user=user)
-
-    # db.session.add(podcast_result)
-    # db.session.commit()
-
-    
     return redirect("/my-podcasts")
+
 
 @app.route("/my-podcasts")
 def my_podcasts():
+    """Show list of podcasts edited with ad"""
     user = User.query.get(session["logged_in_user"])
     all_edited_podcasts = Audio.query.filter_by(user_id=user.user_id, audio_code='edit').all()
-    print([(pod.published, pod.name) for pod in all_edited_podcasts])
-    print(f"this is edit_pod >>>>>>>>>>>>{all_edited_podcasts}")
-
     return render_template("my_podcasts.html", audios=all_edited_podcasts)
 
 
 @app.route("/publish", methods=["POST"])
 def publish():
-
+    """Allow user to publish their pdocasts"""
 
     user = User.query.get(session["logged_in_user"])
     audio_id = request.form.get("publish")
     audio = Audio.query.get(audio_id)
-    
-    print("\n\n\n\n\n\n\n" ,request.form.get("action"))
 
     if request.form.get("action") == "publish":      
         print("publishing: ", audio.name)
         audio.published = True
         db.session.add(audio)
         db.session.commit()
-
         return jsonify({"status": "published"})
 
     else: 
         audio.published = False
         db.session.add(audio)
         db.session.commit()
-
         return jsonify({"status": "unpublished"})
 
 
 @app.route("/users", methods=["POST", "GET"])
 def all_users():
-    """Show list of users"""
+    """Show list of users to follow"""
 
     user = User.query.get(session["logged_in_user"])
-
     users = user.query.filter(User.uname != user.uname).all()
-
     return render_template("users.html", users=users, loggedin_user=user)
 
 
@@ -288,86 +221,48 @@ def handle_follow():
     user = User.query.get(session["logged_in_user"])
     followed_id = request.form.get("followed")
     followed = User.query.get(followed_id)
-    print("\n\n\n\n\n\n\n" ,request.form.get("action"))
 
     if request.form.get("action") == "follow":      
         if followed not in user.following:
             user.following.append(followed)
             db.session.commit()
-
         return jsonify({"status": "following"})
 
     else: 
         user.following.remove(followed)
         db.session.commit()
-
         return jsonify({"status": "unfollowing"})
 
 
 @app.route("/user/<int:user_id>", methods=["GET", "POST"])
 def profile(user_id):
-    """Shows user profile with edited podcasts"""                                   
+    """Show user profile with published podcasts"""                                   
     
     user = User.query.get(session["logged_in_user"])
-
     to_follow = User.query.get(user_id)
-
-    audio = Audio.query.filter_by(user_id=to_follow.user_id, audio_code="edit")
-
+    audio = Audio.query.filter_by(user_id=to_follow.user_id, audio_code="edit", published=True)
     return render_template("profile.html", audios=audio, user=user, to_follow=to_follow) 
-
 
 
 @app.route("/delete-audio/<int:audio_id>", methods=["GET", "POST"])
 def delete_audio(audio_id):
     """Allow user to delete an audio"""
-    
     user = User.query.get(session["logged_in_user"])
     if user:
         audio = Audio.query.filter_by(audio_id=audio_id).one()
-
         if audio.audio_code == "ad":    
-            # file_to_remove = f"https://podcaststudio.s3-us-west-1.amazonaws.com/ads/{audio.name}"
-            
-            db.session.delete(audio)
-            db.session.commit()
-
-            #def a delete_from_s3 function
-            conn = S3Connection(aws_access_key_id, aws_secret_access_key)
-            bucket = Bucket(conn, "podcaststudio")
-            k = Key(bucket)
-            k.key = f"ads/{audio.name}"
-            bucket.delete_key(k)
-
-            
+            delete_from_db(audio, audio.audio_code)
+            delete_from_s3("ads", audio.name)
             return redirect("/my-ads")
 
-
         elif audio.audio_code == "pod":
-            # file_to_remove = f"https://podcaststudio.s3-us-west-1.amazonaws.com/raw_podcasts/{audio.name}"
-            s3_client.delete_object(Bucket="podcaststudio", Key=audio.s3_path)
-            db.session.delete(audio)
-            db.session.commit()
-
-            conn = S3Connection(aws_access_key_id, aws_secret_access_key)
-            bucket = Bucket(conn, "podcaststudio")
-            k = Key(bucket)
-            k.key = f"raw_podcasts/{audio.name}"
-            bucket.delete_key(k)
+            delete_from_db(audio, audio.audio_code)
+            delete_from_s3("pod", audio.name)
             return redirect("/my-raw-podcasts")
 
         elif audio.audio_code == "edit":
-            UPLOAD_FOLDER = "static/podcasts/"
-
-            db.session.delete(audio)
-            db.session.commit()
-
-            conn = S3Connection(aws_access_key_id, aws_secret_access_key)
-            bucket = Bucket(conn, "podcaststudio")
-            k = Key(bucket)
-            k.key = f"podcasts/{audio.name}"
-            bucket.delete_key(k)
-
+            delete_from_db(audio, audio.audio_code)
+            delete_from_s3("edit", audio.name)
             return redirect("/my-podcasts")
 
 
@@ -379,7 +274,6 @@ def logout():
     flash("Logout successful.")
 
     return redirect("/")
-
 
 
 if __name__ == "__main__":

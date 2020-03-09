@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<p> Welcome to {{to_follow.uname}} profile!</p>
+<a href="/upload">upload</a> <br>
 
+<p> Welcome to {{to_follow.uname}} profile!</p>
 <ul>
   {% for audio in audios %}
   <li>
@@ -14,7 +15,5 @@
   </li>
 {% endfor %}
 </ul>
-
-
 
 {% endblock content %}

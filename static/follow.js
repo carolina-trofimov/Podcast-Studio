@@ -1,12 +1,7 @@
-
-
-
 const btns = $('.follow-btn');
     btns.on('click', (evt) => {
       evt.preventDefault();
-
       const userId = $(evt.target).attr("id");
-
       const text = $(evt.target).html();
       
       let action = "follow";

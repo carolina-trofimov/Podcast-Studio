@@ -1,28 +1,30 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h3>My raw-podcasts</h3>
-<ul>
+
+  <h3 class="text-center" id="raw-podcast">My Raw-Podcasts</h3>
+  <ul>
     {% for audio in audios %}
-    <li> 
-      {{ audio.name }} 
-      <audio controls id="audio">
-        <source src="{{audio.s3_path}}">
-      </audio>
-      
-      <form enctype= "form-data" action="/choose-ad">
-        <button sclass="edit" type="submit">edit</button>
-        <input type="hidden" name="raw_pod_id" value="{{audio.audio_id}}">
-      </form>
+    <div class="each-audio">
+      <li> 
+        {{ audio.name }} 
+        <audio controls id="audio">
+          <source src="{{audio.s3_path}}">
+        </audio>
+        
+        <form enctype= "form-data" action="/choose-ad">
+          <button class="edit btn btn-outline-primary" type="submit">edit</button>
+          <input type="hidden" name="raw_pod_id" value="{{audio.audio_id}}">
+        </form>
 
-      <form enctype="form-data" action="/delete-audio/{{audio.audio_id}}" method="POST">
-        <input type="hidden" name="delete-audio" value="{{audio.audio_id}}">
-        <button href="/delete-audio">delete</button>
-      </form>
-
-    </li>
-{% endfor %}
-</ul>
+        <form enctype="form-data" action="/delete-audio/{{audio.audio_id}}" method="POST">
+          <input type="hidden" name="delete-audio" value="{{audio.audio_id}}">
+          <button class="btn btn-outline-danger" href="/delete-audio">delete</button>
+        </form>
+      </li>
+    </div>
+  {% endfor %}
+  </ul>
 
 {% endblock content %}
 

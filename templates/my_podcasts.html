@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h3>My Podcasts</h3>
+<h3 class="text-center" id="podcast">My Podcasts</h3>
 <ul id='podcast-list'>
     {% for edt_podcast in audios %}
+  <div class="each-audio">
     <li>
-
       <div class= "podcast-name" data-pod-id="{{ edt_podcast.audio_id }}">{{ edt_podcast.name }}</div> 
       <audio controls id="audio">
         <source src="{{ edt_podcast.s3_path }}">
@@ -17,14 +17,15 @@
 
       <form class="publish-form" enctype="form-data" action="/publish" method="POST" id="{{ edt_podcast.audio_id }}">
         <input type="hidden" name="publish" value="{{ edt_podcast.published }}">
-        <button class="publish-btn" id="{{ edt_podcast.audio_id }}">{% if edt_podcast.published %}Unpublish{% else %}Publish{% endif %}</button>
+        <button class="publish-btn btn btn-outline-success btn-lg" id="{{ edt_podcast.audio_id }}">{% if edt_podcast.published %}Unpublish{% else %}Publish{% endif %}</button>
       </form>
 
       <form enctype="form-data" action="/delete-audio/{{ edt_podcast.audio_id }}" method="POST">
         <input type="hidden" name="delete-audio" value="{{ edt_podcast.audio_id }}">
-        <button href="/delete-audio">delete</button>
+        <button class="btn btn-outline-danger" href="/delete-audio">delete</button>
       </form>
     </li>
+  </div>
 {% endfor %}
 </ul>
 

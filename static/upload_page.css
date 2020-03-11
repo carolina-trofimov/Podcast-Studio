@@ -8,9 +8,9 @@ body {
   overflow: hidden;
 }
 
-body, nav.navbar.navbar-light.bg-light {
+body {
   background-image: url("/static/background1.jpg");
-  background-color: rgba(255,255,255,0.3);
+  background-color: rgba(255,255,255,0.6);
   background-blend-mode: lighten;
   background-size: cover;
   background-repeat: no-repeat;
@@ -21,20 +21,27 @@ body, nav.navbar.navbar-light.bg-light {
   -webkit-font-smoothing: antialiased;
 }
 
-.bg-light {
-background: none !important;
-}
-
 .col-md-4 {
   margin-top: 15%;
-  font-family: cursive;
+  font-family: webkit-body;
 }
-
+#raw-podcast, #ads, #podcast {
+  font-size: 3rem;
+  font-family: -webkit-body;
+  margin-top: 1.5%;
+}
+}
 
 .container { 
   height: 80%;
  }
 
+.each-audio {
+  margin-top: 3%;
+  font-family: webkit-body;
+}
+
+}
  input[type="text"], input[type="password"], {
   width: 300px;
   padding: 10px 0px;

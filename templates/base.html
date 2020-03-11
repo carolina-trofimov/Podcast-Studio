@@ -14,7 +14,7 @@
 </head>
 <body>
 
-<div class= "teste">
+
   <div id="top-navbar">
   <nav class="navbar navbar-light bg-light">
     <a class="navbar-brand" href="/upload">
@@ -31,24 +31,26 @@
         <a class="dropdown-item" href="/upload">Upload Audio</a>
         <a class="dropdown-item" href="/my-raw-podcasts">Raw Podcasts</a>
         <a class="dropdown-item" href="/my-ads">Ads</a>
-        <a class="dropdown-item" href="/my-raw-podcasts">My Podcasts</a>
+        <a class="dropdown-item" href="/my-podcasts">My Podcasts</a>
         <div class="dropdown-divider"></div>
         <a class="dropdown-item" href="/users">Find Friends</a>
       </div>
     </div> 
     <hr>
-    {% if session.get("logged_in_user") == None %}
-      <a class="login" href="/login">Log In</a> 
+
+      <div class='nav-item'>
+        <a href="/logout">Log Out</a>
+      </div>
+    {% else %}
+      <div class='nav-item'>
+        <a class="login" href="/login">Log In</a>
+      </div>
     {% endif %}
-    {% if session.get("logged_in_user") %}
-      <a href="/logout">Log Out</a>
-    {% endif %}
-    
-  {% endif %}
+
 
   </nav>
   </div>
-</div>
+
 {% with messages = get_flashed_messages() %}
   {% if messages %}
     <p class=flashes>

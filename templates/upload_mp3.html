@@ -1,32 +1,30 @@
 {% extends 'base.html' %}
 {% block content %}
 
-{% if session.get("logged_in_user") %}
-  <a href="/my-raw-podcasts">raw-podcasts</a> <br>
-  <a href="/my-ads">ads</a> <br>
-  <a href="/my-podcasts">my-podcasts</a> <br>
-  <a href="/users">Find Friends</a> <br>
 
-{% endif %}
+<section class='container-fluid'>
+  <div class="row" id="upload">
+      <div class="col-md-4">
+          <h1>Upload Podcast</h1>
+          <form enctype='multipart/form-data' action='/process-upload' method='post'>
+            <input type=file name=file>
+            <input type=submit value=Upload>
+            <input type="hidden" name="audio_type" value="pod">
+          </form>
+        </div>
+      
+    
 
-  <div class="uploadmp3" id="podcast-audio">
-    <h1>Upload Podcast</h1>
-    <form enctype='multipart/form-data' action='/process-upload' method='post'>
-
-      <input type=file name=file>
-      <input type=submit value=Upload>
-      <input type="hidden" name="audio_type" value="pod">
-    </form>
+        <div class="col-md-4 offset-md-4" id="upload-ad">
+            <h1>Upload Ad</h1>
+            <form method='post' action='/process-upload' enctype=multipart/form-data>
+              <input type=file name=file>
+              <input type=submit value=Upload>
+              <input type="hidden" name="audio_type" value="ad">
+            </form>
+          </div>
   </div>
-
-  <div class="uploadmp3" id="podcast-audio">
-      <h1>Upload Ad</h1>
-      <form method='post' action='/process-upload' enctype=multipart/form-data>
-        <input type=file name=file>
-        <input type=submit value=Upload>
-        <input type="hidden" name="audio_type" value="ad">
-      </form>
-    </div>
+</section>
 
 {% endblock %}
 

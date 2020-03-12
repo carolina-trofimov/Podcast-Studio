@@ -2,19 +2,27 @@
 {% block content %}
 
 <h3 class="text-center" id="ads">My Ads</h3>
-<ul>
+<ul class="list-unstyled">
     {% for audio in audios %}
     <div class="each-audio">
-      <li>
-        {{ audio.name }} 
-        <audio controls id="audio">
-          <source src="{{audio.s3_path}}">
-        </audio>
-        <form enctype="form-data" action="/delete-audio/{{audio.audio_id}}" method="POST">
-          <input type="hidden" name="delete-audio" value="{{audio.audio_id}}">
-          <button class="btn btn-md center-block btn-outline-danger" href="/delete-audio">delete</button>
-        </form>
-      </li>
+      <li class="ad-list">
+        <div class="row">
+          <div class="col-6 col-sm-3">
+            <div class="ad-name text-center">{{ audio.name }}</div>
+
+          <audio controls id="audio">
+            <source src="{{audio.s3_path}}">
+          </audio>
+        </div>
+
+        <div class="col-6 col-sm-3 my-auto">
+          <form enctype="form-data" action="/delete-audio/{{audio.audio_id}}" method="POST">
+            <input type="hidden" name="delete-audio" value="{{audio.audio_id}}">
+            <button class="btn btn-md btn-outline-danger" href="/delete-audio">delete</button>
+          </form>
+        </div>
+      </div>
+    </li>
   </div>
 {% endfor %}
 </ul>

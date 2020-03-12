@@ -3,5 +3,5 @@ __pycache__
 .vscode
 *.DS_Store
 *.aws
-*aws_keys.py
+*secrets.sh
 *PodcastStudio-c8a941ca3ba3.json

@@ -1,15 +1,22 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h3>Find Friends</h3>
-<ul>
+<h3 class="text-center" id="follow">Find Friends</h3>
+
+<ul class="list-unstyled">
     {% for user in users %}
-    <li>
-      <a href="/user/{{user.user_id}}">{{ user.uname }}</a>
-      <form enctype="form-data" action="/handle-follow" method="POST">
-        <input type="hidden" name="followed" value="{{user.user_id}}">
-        <button class="follow-btn" id="{{ user.user_id }}">{% if user in loggedin_user.following %}Following{% else %}Follow{% endif %}</button>
-      </form>
+    <li class="follow-user">
+      <div class="row">
+        <div class="col-6 col-sm-1">
+          <a href="/user/{{user.user_id}}">{{ user.uname }}</a>
+        </div>
+        <div class="col-6 col-sm-3">
+          <form enctype="form-data" action="/handle-follow" method="POST">
+            <input type="hidden" name="followed" value="{{user.user_id}}">
+              <button class="follow-btn" id="{{ user.user_id }}">{% if user in loggedin_user.following %}Following{% else %}Follow{% endif %}</button>
+          </form>
+        </div>
+      </div>
     </li>
 {% endfor %}
 </ul>

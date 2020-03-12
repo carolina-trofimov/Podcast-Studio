@@ -25,12 +25,21 @@ body {
   margin-top: 15%;
   font-family: webkit-body;
 }
-#raw-podcast, #ads, #podcast {
+#raw-podcast, #ads, #podcast, #follow,{
   font-size: 3rem;
   font-family: -webkit-body;
   margin-top: 1.5%;
+  margin-left: 2%;
 }
+
+
+
+.follow-user, .raw-podcast-list, .podcast-list, .ad-list {
+  margin-top: 2%;
+  margin-left: 2%
 }
+
+
 
 .container { 
   height: 80%;

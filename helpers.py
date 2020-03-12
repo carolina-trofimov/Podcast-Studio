@@ -1,8 +1,11 @@
-from aws_keys import aws_access_key_id, aws_secret_access_key
 from boto.s3.connection import S3Connection, Bucket, Key
 from constants import ALLOWED_EXTENSIONS, s3_client, s3, bucket
 from flask import session
 from model import AudioType, User, Audio, db
+from os import environ
+
+aws_secret_access_key = environ.get("aws_secret_access_key")
+aws_access_key_id = environ.get("export aws_access_key_id")
 
 
 def allowed_file(filename):

@@ -8,7 +8,6 @@ import io
 from jinja2 import StrictUndefined
 import logging
 from model import connect_to_db, db, AudioType, User, Audio
-import os
 from pydub import AudioSegment
 from sqlalchemy import update
 from werkzeug.utils import secure_filename

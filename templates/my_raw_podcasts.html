@@ -3,24 +3,37 @@
 
 
   <h3 class="text-center" id="raw-podcast">My Raw-Podcasts</h3>
-  <ul>
+  <ul class="list-unstyled">
     {% for audio in audios %}
     <div class="each-audio">
-      <li> 
-        {{ audio.name }} 
-        <audio controls id="audio">
-          <source src="{{audio.s3_path}}">
-        </audio>
-        
-        <form enctype= "form-data" action="/choose-ad">
-          <button class="edit btn btn-outline-primary" type="submit">edit</button>
-          <input type="hidden" name="raw_pod_id" value="{{audio.audio_id}}">
-        </form>
+      <li class="raw-podcast-list"> 
+        <div class="row">
 
-        <form enctype="form-data" action="/delete-audio/{{audio.audio_id}}" method="POST">
-          <input type="hidden" name="delete-audio" value="{{audio.audio_id}}">
-          <button class="btn btn-outline-danger" href="/delete-audio">delete</button>
-        </form>
+          <div class="col-6 col-sm-3">
+            <div class="raw-pod-name text-center">{{ audio.name }}</div> 
+            <audio controls id="audio">
+              <source src="{{audio.s3_path}}">
+            </audio>
+          </div>
+        
+          <div class="col-6 col-sm-3 my-auto">
+            <div class='row'>
+              <div class="col-3 col-sm-3">
+                <form enctype= "form-data" action="/choose-ad">
+                  <button class="edit btn btn-outline-primary btn-md" type="submit">edit</button>
+                  <input type="hidden" name="raw_pod_id" value="{{audio.audio_id}}">
+                </form>
+              </div>
+              <div class="col-3 col-sm-3">
+                <form enctype="form-data" action="/delete-audio/{{audio.audio_id}}" method="POST">
+                  <input type="hidden" name="delete-audio" value="{{audio.audio_id}}">
+                  <button class="btn btn-outline-danger btn-md" href="/delete-audio">delete</button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+        </div>  
       </li>
     </div>
   {% endfor %}

@@ -1,16 +1,23 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<p> Welcome to {{to_follow.uname}} profile!</p>
-<ul>
+
+<h3 class="text-center" id="profile"> Welcome to {{to_follow.uname}}'s profile!</h3>
+<ul class="list-unstyled">
   {% for audio in audios %}
-  <li>
-    {{audio.name}}
-    <audio controls id="audio">
-        <source src="{{audio.s3_path}}">
-      </audio>
-      <form enctype= "form-data" action="/user/{{user.user_id}}"></form>
-  </li>
+  <div class="each-audio">
+    <li class="user-audio-list">
+        <div class="row">
+          <div class="col-6 col-sm-3">
+            <div class="ad-name text-center">{{ audio.name }}</div>
+              <audio controls id="audio">
+                <source src="{{audio.s3_path}}">
+              </audio>
+            <form enctype= "form-data" action="/user/{{user.user_id}}"></form>
+          </div>
+        </div>
+      </li> 
+  </div>
 {% endfor %}
 </ul>
 

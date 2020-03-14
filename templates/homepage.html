@@ -2,9 +2,20 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h1></h1>
-<div class=register>
-<a href="register">Register</a></div>
+<div class="row">
+  <div class="container-fluid" id="welcome">
+    <h1 class="welcome text-center"> Welcome to PodcastStudio</h1>
+
+    <h5 class="podcaststudio text-center"> If you still don't have an account with us
+      <a href="register">Register</a>
+    </h5>
+
+    <h5 class="podcaststudio text-center" id="account"> If you already have an account
+      <a href="login">Login</a>
+    </h5>
+  </div>
+</div>
+
 
 {% endblock %}
 

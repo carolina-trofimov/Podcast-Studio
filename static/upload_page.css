@@ -25,16 +25,32 @@ body {
   margin-top: 15%;
   font-family: webkit-body;
 }
-#raw-podcast, #ads, #podcast, #follow,{
+
+#welcome, {
+  margin-top: 2%;
+  font-family: webkit-body;
+}
+
+#login-form {
+  margin-top: 8%;
+  margin-bottom: 2%;
+  margin-left: 3%;
+  font-family: webkit-body;
+}
+
+#raw-podcast, #ads, #podcast, #follow, #profile {
   font-size: 3rem;
   font-family: -webkit-body;
   margin-top: 1.5%;
   margin-left: 2%;
 }
 
+#email-form, #username-form, #password-form {
+  margin-top: 2%
+  margin-left: 3%;
+}
 
-
-.follow-user, .raw-podcast-list, .podcast-list, .ad-list {
+.follow-user, .raw-podcast-list, .podcast-list, .ad-list, .user-audio-list {
   margin-top: 2%;
   margin-left: 2%
 }
@@ -45,7 +61,7 @@ body {
   height: 80%;
  }
 
-.each-audio {
+.each-audio, .login-head {
   margin-top: 3%;
   font-family: webkit-body;
 }

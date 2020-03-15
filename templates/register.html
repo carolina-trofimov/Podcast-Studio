@@ -1,18 +1,18 @@
 {% extends 'base.html' %}
 {% block content %}
 
-  <h2>Register</h2>
-
-<form action="/handle-registration" method="POST">
-  <label for="email">Email </label>
-  <input type="text" name="email">
-
-  <label for="username">Username</label>
-  <input type="text" name="uname">
-
-  <label for="password">Password </label>
-  <input type="password" name="password">
-  <input type="submit">
-</form>
-
+  <h2 class="text-center" id="register-head">Register</h2>
+  <div class="row" id="login-form">
+    <form action="/handle-registration" method="POST">
+      <div class="col-6 col-sm-3 text-center" id="email-form">
+        <label for="email">Email </label>
+        <input type="text" name="email">
+      </div>
+      <div class="col-6 col-sm-3 text-center" id="username-form">
+        <label for="username">Username</label>
+        <input type="text" name="uname">
+        <input class="btn btn-outline-primary" type="submit">
+      </div>
+    </form>
+  </div>
 {% endblock %}

@@ -15,46 +15,48 @@
 <body>
 
 
-  <div id="top-navbar">
-  <nav class="navbar navbar-light bg-light">
-    <a class="navbar-brand" href="/">
-      <img src="/static/podcastStudio_logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
-      PodcastStudio
+<div id="top-navbar">
+<nav class="navbar navbar-light bg-light">
+  <a class="navbar-brand" href="/">
+    <img src="/static/podcastStudio_logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
+    PodcastStudio
+  </a>
+
+  {% if session.get("logged_in_user") %}
+  <div class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      Menu
     </a>
+    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+      <a class="dropdown-item" href="/upload">Upload Audio</a>
+      <a class="dropdown-item" href="/my-raw-podcasts">Raw Podcasts</a>
+      <a class="dropdown-item" href="/my-ads">Ads</a>
+      <a class="dropdown-item" href="/my-podcasts">My Podcasts</a>
+      <div class="dropdown-divider"></div>
+      <a class="dropdown-item" href="/users">Find Friends</a>
+    </div>
+  </div> 
+  <hr>
 
-    {% if session.get("logged_in_user") %}
-    <div class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        Menu
-      </a>
-      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-        <a class="dropdown-item" href="/upload">Upload Audio</a>
-        <a class="dropdown-item" href="/my-raw-podcasts">Raw Podcasts</a>
-        <a class="dropdown-item" href="/my-ads">Ads</a>
-        <a class="dropdown-item" href="/my-podcasts">My Podcasts</a>
-        <div class="dropdown-divider"></div>
-        <a class="dropdown-item" href="/users">Find Friends</a>
-      </div>
-    </div> 
-    <hr>
-
-      <div class='nav-item'>
-        <a href="/logout">Log Out</a>
-      </div>
-    {% endif %}
-
-  </nav>
-  </div>
-
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <p class=flashes>
-    {% for message in messages %}
-      {{ message }}<br>
-    {% endfor %}
-    </p>
+    <div class='nav-item'>
+      <a href="/logout">Log Out</a>
+    </div>
   {% endif %}
-{% endwith %}
+
+</nav>
+</div>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info" role="alert">
+      <p class=flashes>
+      {% for message in messages %}
+        {{ message }}<br>
+      {% endfor %}
+      </p>
+    </div>
+    {% endif %}
+  {% endwith %}
 
 {% block content %}  put yur content here  {% endblock %}
     

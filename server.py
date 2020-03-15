@@ -34,19 +34,21 @@ def register():
 def register_user():
     """Register a new user."""
     new_email = request.form.get("email")
-    new_password = request.form.get("password")
     uname = request.form.get("uname")
+    new_user = User.query.filter_by(email=new_email).first()
 
-    if User.query.filter_by(email=new_email).first() is None:
+    if new_user is not None:
+        flash("This user already exists.")
+        return redirect("/login")
+    else:
         user = User(uname=uname, email=new_email)
         db.session.add(user)
         db.session.commit()
         flash("New user created.") 
+        uname == uname
+        session["logged_in_user"] = user.user_id
         return redirect("/upload")
-    else:
-        flash("This user already exists.")
-        return redirect("/login")
-
+  
 
 @app.route("/login")
 def show_login_form():
@@ -61,14 +63,15 @@ def login():
     username = request.form.get("username")
     user = User.query.filter_by(email=email).first()
 
+    if user == None:
+        flash("Incorrect email or username.")
+        return redirect("/login")
+
     if username == username:
         session["logged_in_user"] = user.user_id
         return redirect("/upload")
-    else:
-        flash("Incorrect email or password.")
-        return redirect("/upload")
 
-
+    
 @app.route("/upload")
 def upload():
     """Show upload form."""

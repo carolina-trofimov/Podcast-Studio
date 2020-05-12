@@ -5,13 +5,8 @@ const btns = $('.follow-btn');
       const text = $(evt.target).html();
       
       let action = "follow";
-      console.log(text);
       if(text === "Following") {
-        console.log("it was following")
         action = "unfollow";
-      }
-      else{
-        console.log("it wasn't following");
       }
 
       $.post("/handle-follow", {followed: userId, action: action}, (res) =>{

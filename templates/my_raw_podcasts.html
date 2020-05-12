@@ -10,7 +10,7 @@
         <div class="row">
 
           <div class="col-6 col-sm-3">
-            <div class="raw-pod-name text-center">{{ audio.name }}</div> 
+            <div class="raw-podcast-name text-center">{{ audio.name }}</div> 
             <audio controls id="audio">
               <source src="{{audio.s3_path}}">
             </audio>
@@ -21,7 +21,7 @@
               <div class="col-3 col-sm-3">
                 <form enctype= "form-data" action="/choose-ad">
                   <button class="edit btn btn-outline-primary btn-md" type="submit">edit</button>
-                  <input type="hidden" name="raw_pod_id" value="{{audio.audio_id}}">
+                  <input type="hidden" name="raw_podcast_id" value="{{audio.audio_id}}">
                 </form>
               </div>
               <div class="col-3 col-sm-3">

@@ -1,21 +1,23 @@
 
+const returnKey = 13
+
 $(".podcast-name").on("dblclick", function(evt) {
     evt.preventDefault();
     const nameToChange = $(evt.target);
     const data = nameToChange.data();
-    nameToChange.html(`<input class='podcast-name-input' type="text" data-pod-id=${data.podId} value=${nameToChange.text()}/>`)
+    nameToChange.html(`<input class='podcast-name-input' type="text" data-podcast-id=${data.podcastId} value=${nameToChange.text()}/>`)
 });
 
 $('#podcast-list').on('keypress', function(evt) {
-    if (evt.keyCode === 13) {
+    if (evt.keyCode === returnKey) {
         const target = $(evt.target);
         const data = target.data();
         const newName = target.val();
-        const podId = data.podId;
+        const podcastId = data.podcastId;
         
         $.ajax({
           type: "POST",
-          url: `/audio/${podId}`,
+          url: `/audio/${podcastId}`,
           data: {name : newName},
           success: function () {
             // Change the target back to div

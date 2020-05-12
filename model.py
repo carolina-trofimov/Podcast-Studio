@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 
@@ -18,13 +19,18 @@ class AudioType(db.Model):
 
 
 class User(db.Model):
-    """Data model for an audio."""
+    """Data model for an user."""
 
     __tablename__ = "users"
 
-    user_id = db.Column(db.Integer, nullable=False, primary_key=True, autoincrement=True,)
-    uname = db.Column(db.String(30), nullable=False, unique=True,)
-    email = db.Column(db.String(100), nullable=False, unique=True,)
+    user_id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    username = db.Column(db.String(100), nullable=True)
+    avatar = db.Column(db.String(200))
+    active = db.Column(db.Boolean, default=False)
+    tokens = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+
     following = db.relationship(
         'User',
         secondary='followers',
@@ -34,8 +40,8 @@ class User(db.Model):
     )
 
     def __repr__(self):
-        """Return a human-readable representation of an Audio."""
-        return f"<uname={self.uname} email{self.email}>"
+        """Return a human-readable representation of an User."""
+        return f"<username={self.username} email{self.email}>"
 
 
 class Audio(db.Model):
@@ -96,7 +102,7 @@ def connect_to_db(app):
 
 def seed_db(): 
     """seed database"""
-    db.session.add(AudioType(audio_code="pod"))
+    db.session.add(AudioType(audio_code="podcast"))
     db.session.add(AudioType(audio_code="ad"))
     db.session.add(AudioType(audio_code="edit"))
     db.session.commit()

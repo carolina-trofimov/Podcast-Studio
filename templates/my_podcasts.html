@@ -8,7 +8,7 @@
     <li class="podcast-list">
       <div class="row">
         <div class="col-6 col-sm-3">
-          <div class= "podcast-name text-center" data-pod-id="{{ edt_podcast.audio_id }}">{{ edt_podcast.name }}</div> 
+          <div class= "podcast-name text-center" data-podcast-id="{{ edt_podcast.audio_id }}">{{ edt_podcast.name }}</div> 
           <audio controls id="audio">
             <source src="{{ edt_podcast.s3_path }}">
           </audio>

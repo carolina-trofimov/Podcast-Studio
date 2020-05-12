@@ -3,7 +3,7 @@
 
 <ul>
   <form enctype='form-data' action='/concatenate-audios' method='post'>
-    <input type="hidden" name="raw_pod_id" value="{{ request.args.get('raw_pod_id') }}">
+    <input type="hidden" name="raw_podcast_id" value="{{ request.args.get('raw_podcast_id') }}">
     
     {% for audio in audios %}
         {% if audio.audio_code == "ad" %}

@@ -2,77 +2,70 @@ from botocore.exceptions import ClientError
 from constants import s3, s3_client, bucket
 from flask import (Flask, render_template, redirect, request, flash, session, url_for, jsonify)
 from flask_debugtoolbar import DebugToolbarExtension
+from flask_login import LoginManager
 from flask_uploads import UploadSet, configure_uploads, AUDIO
-from helpers import allowed_file, delete_from_s3, delete_from_db, save_file_to_s3, save_audio_to_db
+from helpers import allowed_file, delete_from_s3, delete_from_db, login_required, save_file_to_s3, save_audio_to_db
 import io
 from jinja2 import StrictUndefined
 import logging
 from model import connect_to_db, db, AudioType, User, Audio
+import os
+from os import environ
 from pydub import AudioSegment
 from sqlalchemy import update
 from werkzeug.utils import secure_filename
 
 
+from authlib.integrations.flask_client import OAuth
+
 app = Flask(__name__)
-app.secret_key = "ABC"
+app.secret_key = environ.get("app_secret_key")
 app.jinja_env.undefined = StrictUndefined
 
+CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
+oauth = OAuth(app)
+oauth.register(
+    name='google',
+    client_id=os.environ.get("google_oauth_client_id"),
+    client_secret=os.environ.get("google_oauth_client_secret"),
+    server_metadata_url=CONF_URL,
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
 
 @app.route("/")
 def index():
-    """Show the homepage."""
-    return render_template("homepage.html")
-
-
-@app.route("/register")
-def register():
-    """Show registration form."""
-    return render_template("register.html")
-
-
-@app.route("/handle-registration", methods=["POST"])
-def register_user():
-    """Register a new user."""
-    new_email = request.form.get("email")
-    uname = request.form.get("uname")
-    new_user = User.query.filter_by(email=new_email).first()
-
-    if new_user is not None:
-        flash("This user already exists.")
+    user = dict(session).get("logged_in_user", None)
+    if not user:
         return redirect("/login")
     else:
-        user = User(uname=uname, email=new_email)
-        db.session.add(user)
-        db.session.commit()
-        flash("New user created.") 
-        uname == uname
-        session["logged_in_user"] = user.user_id
         return redirect("/upload")
-  
-
-@app.route("/login")
-def show_login_form():
-    """Show login form."""
-    return render_template("login.html")
 
 
-@app.route("/handle-login", methods=["POST"])
+@app.route('/login')
 def login():
-    """Login user."""
-    email = request.form.get("email")
-    username = request.form.get("username")
-    user = User.query.filter_by(email=email).first()
+    google = oauth.create_client("google")
+    redirect_uri = url_for('authorize', _external=True)
+    return google.authorize_redirect(redirect_uri)
 
-    if user == None:
-        flash("Incorrect email or username.")
-        return redirect("/login")
 
-    if username == username:
-        session["logged_in_user"] = user.user_id
-        return redirect("/upload")
+@app.route('/authorize')
+def authorize():
+    token = oauth.google.authorize_access_token()
+    user = oauth.google.parse_id_token(token)
+    session['logged_in_user'] = user
 
-    
+    if not User.query.filter_by(email=(user['email'])).first():
+        new_user = User(email=user["email"], username=user["name"], avatar=user["picture"], tokens=token["access_token"])
+        print(f"new_user: {new_user}")
+        db.session.add(new_user)
+        db.session.commit()
+
+    return redirect('/upload')    
+
 @app.route("/upload")
+@login_required
 def upload():
     """Show upload form."""
     return render_template('upload_mp3.html')
@@ -100,7 +93,7 @@ def process_upload():
 
         flash("Audio added")
 
-        if audio_type == "pod":
+        if audio_type == "podcast":
             return redirect("/my-raw-podcasts")
         else:
             return redirect("/my-ads")
@@ -117,17 +110,21 @@ def edit_audio_name(audio_id):
 
 
 @app.route("/my-raw-podcasts")
+@login_required
 def my_raw_podcasts():
     """Show raw-podcast list."""
-    user = User.query.get(session["logged_in_user"])
-    audio = Audio.query.filter_by(user_id=user.user_id, audio_code="pod")
+   
+    user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
+    audio = Audio.query.filter_by(user_id=user.user_id, audio_code="podcast")
+
     return render_template("my_raw_podcasts.html", audios=audio)
 
           
 @app.route("/my-ads")
+@login_required
 def my_ads():
     """Show ads list."""
-    user = User.query.get(session["logged_in_user"])
+    user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
     audio = Audio.query.filter_by(user_id=user.user_id, audio_code="ad")
     return render_template("my_ads.html", audios=audio)
 
@@ -135,7 +132,7 @@ def my_ads():
 @app.route("/choose-ad")
 def choose_ad():
     """Allow user to choose and ad"""
-    user = User.query.get(session["logged_in_user"]) #user_id
+    user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
     audios = user.audios
     return render_template("choose_ad.html", audios=audios)
 
@@ -144,16 +141,16 @@ def choose_ad():
 def concatenate_audios():
     """Allow user to add an ad into a podcast audio"""
 
-    user = User.query.get(session["logged_in_user"])
-    #instantiate audio object as pod to access podcast name to concatenate
-    pod_id = request.form.get("raw_pod_id")
-    pod = Audio.query.get(pod_id)
+    user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
+    #instantiate audio object as podcast to access podcast name to concatenate
+    podcast_id = request.form.get("raw_podcast_id")
+    podcast = Audio.query.get(podcast_id)
 
     # Download s3 audio object 
     file1 = io.BytesIO()
-    s3.Object("podcaststudio", f"raw_podcasts/{pod.name}").download_fileobj(file1)
+    s3.Object("podcaststudio", f"raw_podcasts/{podcast.name}").download_fileobj(file1)
     #reset seeking
-    file1.seek(0) 
+    # file1.seek(0) 
     #convert audio into audiosegment object
     audio1 = AudioSegment.from_file(file1, format="mp3")
     
@@ -162,26 +159,27 @@ def concatenate_audios():
 
     file2 = io.BytesIO()
     s3.Object("podcaststudio", f"ads/{ad.name}").download_fileobj(file2)
-    file2.seek(0)
+    # file2.seek(0)
     audio2 = AudioSegment.from_file(file2, format="mp3")
 
     # append ad into podcast
-    edited_pod = audio2.append(audio1, crossfade=2000)
+    edited_podcast = audio2.append(audio1, crossfade=2000)
     
     file3 = io.BytesIO()
-    edited_pod.export(file3, format="mp3")
+    edited_podcast.export(file3, format="mp3")
     file3.seek(0)
     
-    save_file_to_s3(f"{pod.name}-{ad.name}", "edit", file3)
-    save_audio_to_db(f"{pod.name}-{ad.name}", "edit")
+    save_file_to_s3(f"{podcast.name}-{ad.name}", "edit", file3)
+    save_audio_to_db(f"{podcast.name}-{ad.name}", "edit")
 
     return redirect("/my-podcasts")
 
 
 @app.route("/my-podcasts")
+@login_required
 def my_podcasts():
     """Show list of podcasts edited with ad"""
-    user = User.query.get(session["logged_in_user"])
+    user =User.query.filter_by(email=session["logged_in_user"]["email"]).first()
     all_edited_podcasts = Audio.query.filter_by(user_id=user.user_id, audio_code='edit').all()
     return render_template("my_podcasts.html", audios=all_edited_podcasts)
 
@@ -190,7 +188,7 @@ def my_podcasts():
 def publish():
     """Allow user to publish their pdocasts"""
 
-    user = User.query.get(session["logged_in_user"])
+    user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
     audio_id = request.form.get("publish")
     audio = Audio.query.get(audio_id)
 
@@ -212,15 +210,22 @@ def publish():
 def all_users():
     """Show list of users to follow"""
 
-    user = User.query.get(session["logged_in_user"])
-    users = user.query.filter(User.uname != user.uname).all()
+    user = dict(session).get("logged_in_user", None)
+    if user:
+        user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
+        users = user.query.filter(User.email != user.email).all()
+
+    else:
+        users = User.query.all()
+    
     return render_template("users.html", users=users, loggedin_user=user)
 
 
 @app.route("/handle-follow", methods=["POST"])
+@login_required
 def handle_follow():
     
-    user = User.query.get(session["logged_in_user"])
+    user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
     followed_id = request.form.get("followed")
     followed = User.query.get(followed_id)
 
@@ -239,17 +244,23 @@ def handle_follow():
 @app.route("/user/<int:user_id>", methods=["GET", "POST"])
 def profile(user_id):
     """Show user profile with published podcasts"""                                   
-    
-    user = User.query.get(session["logged_in_user"])
-    to_follow = User.query.get(user_id)
-    audio = Audio.query.filter_by(user_id=to_follow.user_id, audio_code="edit", published=True)
+    user = dict(session).get("logged_in_user", None)
+    if user:
+        user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
+        to_follow = User.query.get(user_id)
+        audio = Audio.query.filter_by(user_id=to_follow.user_id, audio_code="edit", published=True)
+    else:
+        to_follow = User.query.get(user_id)
+        audio = Audio.query.filter_by(user_id=to_follow.user_id, audio_code="edit", published=True)
+
     return render_template("profile.html", audios=audio, user=user, to_follow=to_follow) 
 
 
 @app.route("/delete-audio/<int:audio_id>", methods=["GET", "POST"])
+@login_required
 def delete_audio(audio_id):
     """Allow user to delete an audio"""
-    user = User.query.get(session["logged_in_user"])
+    user = User.query.filter_by(email=session["logged_in_user"]["email"]).first() 
     if user:
         audio = Audio.query.filter_by(audio_id=audio_id).one()
         if audio.audio_code == "ad":    
@@ -257,9 +268,9 @@ def delete_audio(audio_id):
             delete_from_s3("ads", audio.name)
             return redirect("/my-ads")
 
-        elif audio.audio_code == "pod":
+        elif audio.audio_code == "podcast":
             delete_from_db(audio, audio.audio_code)
-            delete_from_s3("pod", audio.name)
+            delete_from_s3("podcast", audio.name)
             return redirect("/my-raw-podcasts")
 
         elif audio.audio_code == "edit":
@@ -269,13 +280,14 @@ def delete_audio(audio_id):
 
 
 @app.route("/logout")
+@login_required
 def logout():
     """Logout user."""
 
-    del session["logged_in_user"] 
-    flash("Logout successful.")
-
+    for key in list(session.keys()):
+        session.pop(key)
     return redirect("/")
+
 
 
 if __name__ == "__main__":

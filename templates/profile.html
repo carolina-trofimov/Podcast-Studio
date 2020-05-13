@@ -13,7 +13,9 @@
               <audio controls id="audio">
                 <source src="{{audio.s3_path}}">
               </audio>
-            <form enctype= "form-data" action="/user/{{user.user_id}}"></form>
+            {% if user%}
+              <form enctype= "form-data" action="/user/{{user.user_id}}"></form>
+            {% endif %}
           </div>
         </div>
       </li> 

@@ -50,7 +50,7 @@ class Audio(db.Model):
     __tablename__ = "audios"
 
     audio_id = db.Column(db.Integer, nullable=False, primary_key=True, autoincrement=True,)
-    name = db.Column(db.String(50), nullable=False,)
+    name = db.Column(db.String(100), nullable=False,)
     s3_path = db.Column(db.String(300), nullable=False,)
     published = db.Column(db.Boolean, default=False, nullable=False,)
     audio_code = db.Column(db.String(10),

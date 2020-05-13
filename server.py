@@ -2,7 +2,7 @@ from botocore.exceptions import ClientError
 from constants import s3, s3_client, bucket
 from flask import (Flask, render_template, redirect, request, flash, session, url_for, jsonify)
 from flask_debugtoolbar import DebugToolbarExtension
-from flask_login import LoginManager
+from flask_login import LoginManager, logout_user
 from flask_uploads import UploadSet, configure_uploads, AUDIO
 from helpers import allowed_file, delete_from_s3, delete_from_db, login_required, save_file_to_s3, save_audio_to_db
 import io
@@ -34,8 +34,13 @@ oauth.register(
     }
 )
 
+
 @app.route("/")
 def index():
+    return render_template("login.html")
+
+@app.route("/google-login")
+def google_login():
     user = dict(session).get("logged_in_user", None)
     if not user:
         return redirect("/login")
@@ -74,6 +79,9 @@ def upload():
 @app.route("/process-upload", methods=["POST"])
 def process_upload():
     """Upload file to S3 and add it to database."""
+
+    user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
+
     if 'file' not in request.files:
         flash("No file found")
         return redirect('/upload')
@@ -89,7 +97,7 @@ def process_upload():
         audio_type = request.form.get("audio_type")
 
         save_file_to_s3(filename, audio_type, request.files['file'])
-        save_audio_to_db(filename, audio_type)
+        save_audio_to_db(filename, audio_type, user)
 
         flash("Audio added")
 
@@ -150,7 +158,7 @@ def concatenate_audios():
     file1 = io.BytesIO()
     s3.Object("podcaststudio", f"raw_podcasts/{podcast.name}").download_fileobj(file1)
     #reset seeking
-    # file1.seek(0) 
+    file1.seek(0) 
     #convert audio into audiosegment object
     audio1 = AudioSegment.from_file(file1, format="mp3")
     
@@ -159,7 +167,7 @@ def concatenate_audios():
 
     file2 = io.BytesIO()
     s3.Object("podcaststudio", f"ads/{ad.name}").download_fileobj(file2)
-    # file2.seek(0)
+    file2.seek(0)
     audio2 = AudioSegment.from_file(file2, format="mp3")
 
     # append ad into podcast
@@ -170,7 +178,7 @@ def concatenate_audios():
     file3.seek(0)
     
     save_file_to_s3(f"{podcast.name}-{ad.name}", "edit", file3)
-    save_audio_to_db(f"{podcast.name}-{ad.name}", "edit")
+    save_audio_to_db(f"{podcast.name}-{ad.name}", "edit", user)
 
     return redirect("/my-podcasts")
 
@@ -245,6 +253,7 @@ def handle_follow():
 def profile(user_id):
     """Show user profile with published podcasts"""                                   
     user = dict(session).get("logged_in_user", None)
+    
     if user:
         user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
         to_follow = User.query.get(user_id)
@@ -264,28 +273,29 @@ def delete_audio(audio_id):
     if user:
         audio = Audio.query.filter_by(audio_id=audio_id).one()
         if audio.audio_code == "ad":    
-            delete_from_db(audio, audio.audio_code)
+            delete_from_db(audio)
             delete_from_s3("ads", audio.name)
             return redirect("/my-ads")
 
         elif audio.audio_code == "podcast":
-            delete_from_db(audio, audio.audio_code)
+            delete_from_db(audio)
             delete_from_s3("podcast", audio.name)
             return redirect("/my-raw-podcasts")
 
         elif audio.audio_code == "edit":
-            delete_from_db(audio, audio.audio_code)
+            delete_from_db(audio)
             delete_from_s3("edit", audio.name)
             return redirect("/my-podcasts")
 
 
 @app.route("/logout")
-@login_required
 def logout():
     """Logout user."""
 
-    for key in list(session.keys()):
-        session.pop(key)
+    # for key in list(session.keys()):
+    #     session.pop(key)
+    del session["logged_in_user"] 
+
     return redirect("/")
 
 

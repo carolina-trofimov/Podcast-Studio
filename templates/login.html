@@ -1,9 +1,28 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h2 class="text-center" id="login-head">Login</h2>
+<div class="row">
+  <div class=" welc col-sm-6 offset-sm-3 border-0 rounded" id="welcome">
+    <h1 class="text-center"> Welcome to PodcastStudio</h1>
+    <h5 class="podcaststudio text-center"> If you still don't have an account with us
 
-<div class="row" id="login-form">
+      <form class="text-center" enctype= "form-data" action="/google-login">
+        <button class="loginBtn loginBtn--google">
+        Login with Google
+        </button>
+      </form>
+    </h5>
+    <h5 class="podcaststudio text-center"> or continue without loging in
+
+      <form class="text-center" enctype= "form-data" action="/users">
+        <button class="edit btn btn-info btn-md">Find Friends</button>
+      </form>
+    </h5>
+
+
+
+
+<!-- <div class="row" id="login-form">
   <form action="/handle-login" method="POST">
     <div class="col-6 col-sm-3 text-center" id="email-form">
       <label for="email">Email</label>
@@ -18,4 +37,4 @@
     </div>
   </form>
 </div>
-{% endblock %}
+{% endblock %} -->

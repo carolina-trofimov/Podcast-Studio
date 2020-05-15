@@ -1,3 +1,4 @@
+from authlib.integrations.flask_client import OAuth, token_update
 from botocore.exceptions import ClientError
 from constants import s3, s3_client, bucket
 from flask import (Flask, render_template, redirect, request, flash, session, url_for, jsonify)
@@ -12,11 +13,12 @@ from model import connect_to_db, db, AudioType, User, Audio
 import os
 from os import environ
 from pydub import AudioSegment
+import requests
 from sqlalchemy import update
 from werkzeug.utils import secure_filename
 
 
-from authlib.integrations.flask_client import OAuth
+
 
 app = Flask(__name__)
 app.secret_key = environ.get("app_secret_key")
@@ -34,6 +36,22 @@ oauth.register(
     }
 )
 
+
+@token_update.connect_via(app)
+def on_token_update(sender, name, token, refresh_token=None, access_token=None):
+
+    if refresh_token:
+        item = OAuth2Token.find(name=name, refresh_token=refresh_token)
+    elif access_token:
+        item = OAuth2Token.find(name=name, access_token=access_token)
+    else:
+        return
+
+    # update old token
+    item.access_token = token['access_token']
+    item.refresh_token = token.get('refresh_token')
+    item.expires_at = token['expires_at']
+    item.save()
 
 @app.route("/")
 def index():
@@ -60,12 +78,18 @@ def authorize():
     token = oauth.google.authorize_access_token()
     user = oauth.google.parse_id_token(token)
     session['logged_in_user'] = user
+    user_model = User.query.filter_by(email=(user['email'])).first()
 
-    if not User.query.filter_by(email=(user['email'])).first():
+    if not user_model:
         new_user = User(email=user["email"], username=user["name"], avatar=user["picture"], tokens=token["access_token"])
         print(f"new_user: {new_user}")
         db.session.add(new_user)
         db.session.commit()
+    else:
+        user_model.tokens = token["access_token"]
+        db.session.commit()
+
+
 
     return redirect('/upload')    
 
@@ -292,12 +316,14 @@ def delete_audio(audio_id):
 def logout():
     """Logout user."""
 
-    # for key in list(session.keys()):
-    #     session.pop(key)
-    del session["logged_in_user"] 
+    user = User.query.filter_by(email=session["logged_in_user"]["email"]).first() 
+
+    if user:
+        del session["logged_in_user"] 
+
+    response = requests.get(f"https://accounts.google.com/o/oauth2/revoke?token={user.tokens}")
 
     return redirect("/")
-
 
 
 if __name__ == "__main__":

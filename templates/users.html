@@ -5,13 +5,15 @@
 
 <ul class="list-unstyled">
     {% for user in users %}
-    <li class="follow-user">
+    <li class="col-md-4 offset-md-1 border-2 rounded follow-user">
       <div class="row">
-        <div class="col-6 col-sm-1">
+        <div class="col-6 col-sm-8">
+          <img class="photo" src={{ user.avatar }}
+               alt="{{user.username}}">
           <a href="/user/{{user.user_id}}">{{ user.username }}</a>
         </div>
         {% if loggedin_user %}
-          <div class="col-6 col-sm-3">
+          <div class="col-6 col-sm-3 align-self-center">
             <form enctype="form-data" action="/handle-follow" method="POST">
               <input type="hidden" name="followed" value="{{user.user_id}}">
                 <button class="follow-btn btn-outline-primary" id="{{ user.user_id }}">{% if user in loggedin_user.following %}Following{% else %}Follow{% endif %}</button>

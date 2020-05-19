@@ -14,7 +14,7 @@ import os
 from os import environ
 from pydub import AudioSegment
 import requests
-from sqlalchemy import update
+from sqlalchemy import and_, update
 from werkzeug.utils import secure_filename
 
 
@@ -88,10 +88,8 @@ def authorize():
     else:
         user_model.tokens = token["access_token"]
         db.session.commit()
-
-
-
     return redirect('/upload')    
+
 
 @app.route("/upload")
 @login_required
@@ -214,6 +212,13 @@ def my_podcasts():
     user =User.query.filter_by(email=session["logged_in_user"]["email"]).first()
     all_edited_podcasts = Audio.query.filter_by(user_id=user.user_id, audio_code='edit').all()
     return render_template("my_podcasts.html", audios=all_edited_podcasts)
+
+
+@app.route("/all-podcasts")
+def all_podcasts():
+    
+    audios = Audio.query.filter_by(published=True)
+    return render_template("all_podcasts.html", audios=audios)
 
 
 @app.route("/publish", methods=["POST"])

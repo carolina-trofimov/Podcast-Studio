@@ -2,7 +2,9 @@
 {% block content %}
 
 
-<h3 class="text-center" id="profile"> Welcome to {{to_follow.username}}'s profile!</h3>
+<h3 class="text-center" id="profile">Welcome to {{to_follow.username}}'s profile!
+  <img class="photo"src={{to_follow.avatar}}>
+</h3>
 <ul class="list-unstyled">
   {% for audio in audios %}
   <div class="each-audio">
@@ -13,9 +15,6 @@
               <audio controls id="audio">
                 <source src="{{audio.s3_path}}">
               </audio>
-            {% if user%}
-              <form enctype= "form-data" action="/user/{{user.user_id}}"></form>
-            {% endif %}
           </div>
         </div>
       </li> 

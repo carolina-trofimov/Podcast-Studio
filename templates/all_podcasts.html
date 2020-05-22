@@ -8,11 +8,12 @@
     <div class="each-audio col-md-4 offset-md-1 border-2 rounded follow-user">
       <li class="podcast-list">
         <div class="row">
-          <div class="col-6 col-sm-3">
-            <div class= "podcast-name text-center" data-podcast-id="{{ audio.audio_id }}">{{ audio.name }}
-              <img class="small-photo" src={{ audio.user.avatar }}
+          <div class="col-6 col-sm-8">
+            <img class="small-photo" src={{ audio.user.avatar }}
                    alt="{{audio.user.username}}">
               <a href="/user/{{audio.user.user_id}}">{{ audio.user.username }}</a>
+            <div class= "podcast-name text-center col-6 col-sm-8" data-podcast-id="{{ audio.audio_id }}">{{ audio.name }}
+              
             </div> 
             <audio controls id="audio">
               <source src="{{ audio.s3_path }}">

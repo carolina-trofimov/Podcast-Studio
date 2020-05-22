@@ -13,13 +13,17 @@ body {
   background-color: rgba(255,255,255,0.6);
   background-blend-mode: lighten;
   background-size: cover;
+  background-attachment: fixed;
+  min-height: 500px;
   background-repeat: no-repeat;
   background-position: center center;
   background
   color: #000;
   line-height: 1.3;
   -webkit-font-smoothing: antialiased;
+
 }
+
 #upload-pod, #upload-ad {
   margin-top: 15%;
   font-family: webkit-body;

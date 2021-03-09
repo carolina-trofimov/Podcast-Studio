@@ -4,12 +4,13 @@ from constants import ALLOWED_EXTENSIONS, s3_client, s3, bucket
 from flask import flash, redirect, session
 from functools import wraps
 from model import AudioType, User, Audio, db
+import os
 from os import environ
 
 aws_secret_access_key = environ.get("AWS_SECRET_ACCESS_KEY")
 aws_access_key_id = environ.get("AWS_ACCESS_KEY_ID")
 
-
+print(aws_access_key_id)
 
 def login_required(f):
     @wraps(f)

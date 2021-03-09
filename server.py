@@ -21,20 +21,25 @@ from werkzeug.utils import secure_filename
 
 
 app = Flask(__name__)
-app.secret_key = environ.get("app_secret_key")
+app.secret_key = os.urandom(25)
 app.jinja_env.undefined = StrictUndefined
+
+GOOGLE_CLIENT_ID = os.environ.get("google_oauth_client_id")
+GOOGLE_CLIENT_SECRET = os.environ.get("google_oauth_client_secret")
+
 
 CONF_URL = 'https://accounts.google.com/.well-known/openid-configuration'
 oauth = OAuth(app)
 oauth.register(
     name='google',
-    client_id=os.environ.get("google_oauth_client_id"),
-    client_secret=os.environ.get("google_oauth_client_secret"),
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
     server_metadata_url=CONF_URL,
     client_kwargs={
         'scope': 'openid email profile'
     }
 )
+
 
 
 @token_update.connect_via(app)
@@ -77,6 +82,7 @@ def login():
 def authorize():
     token = oauth.google.authorize_access_token()
     user = oauth.google.parse_id_token(token)
+
     session['logged_in_user'] = user
     user_model = User.query.filter_by(email=(user['email'])).first()
 
@@ -95,7 +101,8 @@ def authorize():
 @login_required
 def upload():
     """Show upload form."""
-    return render_template('upload_mp3.html')
+    # user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
+    return render_template('upload_mp3.html') # send user to html template as user=user
 
 
 @app.route("/process-upload", methods=["POST"])
@@ -103,7 +110,6 @@ def process_upload():
     """Upload file to S3 and add it to database."""
 
     user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
-
     if 'file' not in request.files:
         flash("No file found")
         return redirect('/upload')
@@ -179,7 +185,7 @@ def concatenate_audios():
     # Download s3 audio object 
     file1 = io.BytesIO()
     s3.Object("podcaststudio", f"raw_podcasts/{podcast.name}").download_fileobj(file1)
-    #reset seeking
+    #reset seeking 
     file1.seek(0) 
     #convert audio into audiosegment object
     audio1 = AudioSegment.from_file(file1, format="mp3")
@@ -230,7 +236,7 @@ def publish():
     audio = Audio.query.get(audio_id)
 
     if request.form.get("action") == "publish":      
-        print("publishing: ", audio.name)
+        # print("publishing: ", audio.name)
         audio.published = True
         db.session.add(audio)
         db.session.commit()
@@ -261,7 +267,6 @@ def all_users():
 @app.route("/handle-follow", methods=["POST"])
 @login_required
 def handle_follow():
-    
     user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
     followed_id = request.form.get("followed")
     followed = User.query.get(followed_id)

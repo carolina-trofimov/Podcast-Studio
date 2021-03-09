@@ -16,52 +16,52 @@
 
 
 <div id="top-navbar">
-<nav class="navbar navbar-light bg-light">
-  <a class="navbar-brand" href="/">
-    <img src="/static/PodcastStudio_logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
-    PodcastStudio
-  </a>
-
-  {% set user = session.get("logged_in_user") %}
-  {% set picture = user["picture"] %}
-
-  {% if user %}
-  <div class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-      Menu
+  <nav class="navbar navbar-light bg-light">
+    <a class="navbar-brand" href="/">
+      <img src="/static/PodcastStudio_logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
+      PodcastStudio
     </a>
-    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-      <a class="dropdown-item" href="/upload">Upload Audio</a>
-      <a class="dropdown-item" href="/my-raw-podcasts">Raw Podcasts</a>
-      <a class="dropdown-item" href="/my-ads">Ads</a>
-      <a class="dropdown-item" href="/my-podcasts">My Podcasts</a>
-      <a class="dropdown-item" href="/all-podcasts">All Podcasts</a>
-      <div class="dropdown-divider"></div>
-      <a class="dropdown-item" href="/users">Find Friends</a>
-    </div>
-  </div> 
-  <hr>
+
+    {% set user = session.get("logged_in_user") %}
+    {% set picture = user["picture"] %}
+
+    {% if user %}
+    <div class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Menu
+      </a>
+      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+        <a class="dropdown-item" href="/upload">Upload Audio</a>
+        <a class="dropdown-item" href="/my-raw-podcasts">Raw Podcasts</a>
+        <a class="dropdown-item" href="/my-ads">Ads</a>
+        <a class="dropdown-item" href="/my-podcasts">My Podcasts</a>
+        <a class="dropdown-item" href="/all-podcasts">All Podcasts</a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="/users">Find Friends</a>
+      </div>
+    </div> 
+    <hr>
     <div class="nav-item">
       <a class="navbar-brand" href="/">
         <img class="small-photo" src={{picture}}>
       </a>
       <a href="/logout">Log Out</a>
     </div>
-  {% endif %}
-</nav>
+    {% endif %}
+  </nav>
 </div>
 
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <div class="alert alert-info" role="alert">
-      <p class=flashes>
-      {% for message in messages %}
-        {{ message }}<br>
-      {% endfor %}
-      </p>
-    </div>
-    {% endif %}
-  {% endwith %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="alert alert-info" role="alert">
+  <p class=flashes>
+  {% for message in messages %}
+    {{ message }}<br>
+  {% endfor %}
+  </p>
+</div>
+{% endif %}
+{% endwith %}
 
 {% block content %}  put yur content here  {% endblock %}
     

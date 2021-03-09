@@ -17,7 +17,6 @@ body {
   min-height: 500px;
   background-repeat: no-repeat;
   background-position: center center;
-  background
   color: #000;
   line-height: 1.3;
   -webkit-font-smoothing: antialiased;
@@ -28,6 +27,7 @@ body {
   margin-top: 15%;
   font-family: webkit-body;
 }
+
 
 .rounded {
   margin-top: 10%;

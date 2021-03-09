@@ -6,3 +6,4 @@ __pycache__
 *secrets.sh
 *PodcastStudio-c8a941ca3ba3.json
 flask.service 
+.bash_profile

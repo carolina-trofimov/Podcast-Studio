@@ -14,10 +14,7 @@
         </div>
         {% if loggedin_user %}
           <div class="col-6 col-sm-3 align-self-center">
-            <form enctype="form-data" action="/handle-follow" method="POST">
-              <input type="hidden" name="followed" value="{{user.user_id}}">
-                <button class="follow-btn btn-outline-primary" id="{{ user.user_id }}">{% if user in loggedin_user.following %}Following{% else %}Follow{% endif %}</button>
-            </form>
+            <button class="follow-btn btn-outline-primary" id="{{ user.user_id }}">{% if user in loggedin_user.following %}Following{% else %}Follow{% endif %}</button>
           </div>
         {% endif %}
       </div>

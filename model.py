@@ -30,7 +30,6 @@ class User(db.Model):
     active = db.Column(db.Boolean, default=False)
     tokens = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
-
     following = db.relationship(
         'User',
         secondary='followers',

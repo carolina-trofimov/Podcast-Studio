@@ -21,22 +21,22 @@ First they upload the mp3 audio files, then they select which ad they would like
 
 * ```$ virtualenv env ``` -> to create virtual environment
 
-* ''' source env/bin/activate''' -> activate your virtual environment
+* ```$ source env/bin/activate``` -> activate your virtual environment
 
-* Create secrets.sh to store aws secret keys and add secrets.sh to gitignore
+* ```$ pip3 install awscli``` -> To install AWS CLI
+
+* ```$ aws configure``` -> To add AWSAccessKeyId and AWSSecretKey
 
 * ```$ createdb podcasts ``` -> to create your data base
 
 * ```$ python3 models.py ``` 
-
-* ```$ source secrets.sh ```
 
 * ```$ pip3 install -r requirements.txt ``` -> to install all the libraries needed
 
 ## Executing program
 
 * Source and activate your virtual environment
-* source secrets.sh
+
 
 * ```$ python3 server.py ```
 

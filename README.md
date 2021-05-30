@@ -5,7 +5,7 @@
 
 
 PodcastStudio is a full-stack web application that allows podcasters to insert an ad into their podcasts. 
-First they upload the mp3 audio files, then they select which ad they would like to add to the end of their podcast and so they can choose to publish the ad, which makes their audios public so other users can play their edited podcast and follow their profile.
+First they upload the mp3 audio files, then they select which ad they would like to add to their podcast and so they can choose to publish the podcast, which makes their audios public so other users can play their edited podcast and follow their profile.
 
 **Live Example** [PocastStudio](http://54.202.222.213/)
 
@@ -35,10 +35,13 @@ First they upload the mp3 audio files, then they select which ad they would like
 
 ## Executing program
 
-* Source and activate your virtual environment
+* ```$ source secrets.sh``` -> to source secret keys and
+
+* ```$ python3 server.py ``` -> to start your server
 
 
-* ```$ python3 server.py ```
+## High level archtecture
+![picture](static/high_level_architecture.png)
 
 ## Author:
 

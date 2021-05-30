@@ -41,7 +41,7 @@ First they upload the mp3 audio files, then they select which ad they would like
 
 
 ## High level archtecture
-![picture](static/high_level_architecture.png)
+![picture](static/archtecture_highlevel.png)
 
 ## Author:
 

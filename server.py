@@ -18,8 +18,6 @@ from sqlalchemy import and_, update
 from werkzeug.utils import secure_filename
 
 
-
-
 app = Flask(__name__)
 app.secret_key = os.urandom(25)
 app.jinja_env.undefined = StrictUndefined
@@ -39,7 +37,6 @@ oauth.register(
         'scope': 'openid email profile'
     }
 )
-
 
 
 @token_update.connect_via(app)
@@ -88,7 +85,6 @@ def authorize():
 
     if not user_model:
         new_user = User(email=user["email"], username=user["name"], avatar=user["picture"], tokens=token["access_token"])
-        print(f"new_user: {new_user}")
         db.session.add(new_user)
         db.session.commit()
     else:
@@ -133,7 +129,9 @@ def process_upload():
             return redirect("/my-raw-podcasts")
         else:
             return redirect("/my-ads")
-
+    else:
+        flash("Please upload an mp3 file")
+        return redirect("/upload")
 
 @app.route("/audio/<int:audio_id>", methods=["POST"])
 def edit_audio_name(audio_id):
@@ -166,6 +164,7 @@ def my_ads():
 
 
 @app.route("/choose-ad")
+@login_required
 def choose_ad():
     """Allow user to choose and ad"""
     user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
@@ -173,7 +172,8 @@ def choose_ad():
     return render_template("choose_ad.html", audios=audios)
 
 
-@app.route("/concatenate-audios", methods=["GET", "POST"])
+@app.route("/concatenate-audios", methods=["POST"])
+@login_required
 def concatenate_audios():
     """Allow user to add an ad into a podcast audio"""
 
@@ -182,11 +182,11 @@ def concatenate_audios():
     podcast_id = request.form.get("raw_podcast_id")
     podcast = Audio.query.get(podcast_id)
 
-    # Download s3 audio object 
+    # Download s3 audio object to in-memory byte buffer
     file1 = io.BytesIO()
     s3.Object("podcaststudio", f"raw_podcasts/{podcast.name}").download_fileobj(file1)
     #reset seeking 
-    file1.seek(0) 
+    file1.seek(0)
     #convert audio into audiosegment object
     audio1 = AudioSegment.from_file(file1, format="mp3")
     
@@ -229,14 +229,13 @@ def all_podcasts():
 
 @app.route("/publish", methods=["POST"])
 def publish():
-    """Allow user to publish their pdocasts"""
+    """Allow user to publish their podcasts"""
 
     user = User.query.filter_by(email=session["logged_in_user"]["email"]).first()
     audio_id = request.form.get("publish")
     audio = Audio.query.get(audio_id)
 
     if request.form.get("action") == "publish":      
-        # print("publishing: ", audio.name)
         audio.published = True
         db.session.add(audio)
         db.session.commit()
@@ -299,7 +298,7 @@ def profile(user_id):
     return render_template("profile.html", audios=audio, user=user, to_follow=to_follow) 
 
 
-@app.route("/delete-audio/<int:audio_id>", methods=["GET", "POST"])
+@app.route("/delete-audio/<int:audio_id>", methods=["POST"])
 @login_required
 def delete_audio(audio_id):
     """Allow user to delete an audio"""
@@ -307,18 +306,18 @@ def delete_audio(audio_id):
     if user:
         audio = Audio.query.filter_by(audio_id=audio_id).one()
         if audio.audio_code == "ad":    
-            delete_from_db(audio)
             delete_from_s3("ads", audio.name)
+            delete_from_db(audio)
             return redirect("/my-ads")
 
         elif audio.audio_code == "podcast":
-            delete_from_db(audio)
             delete_from_s3("podcast", audio.name)
+            delete_from_db(audio)
             return redirect("/my-raw-podcasts")
 
         elif audio.audio_code == "edit":
-            delete_from_db(audio)
             delete_from_s3("edit", audio.name)
+            delete_from_db(audio)
             return redirect("/my-podcasts")
 
 

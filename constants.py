@@ -1,5 +1,5 @@
 import boto3
-import boto
+
 
 ALLOWED_EXTENSIONS = {"mp3"}
 

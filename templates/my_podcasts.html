@@ -18,12 +18,12 @@
             <div class="col-3 col-sm-3">
               <button class="publish-btn btn btn-outline-success btn-md" id="{{ edt_podcast.audio_id }}">{% if edt_podcast.published %}Unpublish{% else %}Publish{% endif %}</button>
             </div>
-            <div class="col-3 col-sm-3 offset-sm-1">
-              <form enctype="form-data" action="/delete-audio/{{ edt_podcast.audio_id }}" method="POST">
-                <input type="hidden" name="delete-audio" value="{{ edt_podcast.audio_id }}">
-                <button class="btn btn-outline-danger btn-md">delete</button>
-              </form>
-            </div>
+          <div class="col-3 col-sm-3 offset-sm-1">
+            <form enctype="form-data" action="/delete-audio/{{ edt_podcast.audio_id }}" method="POST">
+              <input type="hidden" name="delete-audio" value="{{ edt_podcast.audio_id }}">
+              <button class="btn btn-outline-danger btn-md">delete</button>
+            </form>
+          </div>
           </div>  
         </div>
       </div>

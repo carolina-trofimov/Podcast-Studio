@@ -1,24 +1,28 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<ul>
+<h3 class="text-center" id="ads">Choose an ad</h3>
+<ul class="mt-4">
   <form enctype='form-data' action='/concatenate-audios' method='post'>
     <input type="hidden" name="raw_podcast_id" value="{{ request.args.get('raw_podcast_id') }}">
-    
-    {% for audio in audios %}
+      {% for audio in audios %}
         {% if audio.audio_code == "ad" %}
-    
-    <li>
-    <input type="radio" value="{{ audio.audio_id }}" name="ad_id">
-      <label for="ad">{{ audio.name }}</label> 
-      <audio controls id="audio">
-        <source src="{{audio.s3_path}}">
-      </audio> 
-    </li>
-    {% endif %}
-{% endfor %}
-
-  <input type="submit">
+        <li class="ad-list">
+          <div class="each-audio">
+            <div class="row">
+              <div class="col-6 col-sm-3">
+                <input type="radio" value="{{ audio.audio_id }}" name="ad_id"/>
+                <label for="ad">{{ audio.name }}</label> 
+                <audio controls id="audio">
+                  <source src="{{audio.s3_path}}">
+                </audio> 
+              </div>
+            </div>
+          </div>
+        </li>
+        {% endif %}
+      {% endfor %}
+    <input type="submit">
   </form>
 </ul>
 

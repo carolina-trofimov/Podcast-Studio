@@ -40,7 +40,7 @@ First they upload the mp3 audio files, then they select which ad they would like
 * ```$ python3 server.py ``` -> to start your server
 
 
-## High level archtecture
+## High level architecture
 ![picture](static/archtecture_highlevel.png)
 
 ## Author:
